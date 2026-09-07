@@ -49,12 +49,14 @@ class EmployeeController extends Controller
         }
 
         return $request->validate([
-            'name' => [$employee ? 'sometimes' : 'required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255', $emailRule],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'role_id' => [$employee ? 'sometimes' : 'required', 'exists:roles,id'],
-            'pin' => ['nullable', 'string', 'max:20'],
-            'is_active' => ['sometimes', 'boolean'],
+            'name'              => [$employee ? 'sometimes' : 'required', 'string', 'max:255'],
+            'email'             => ['nullable', 'email', 'max:255', $emailRule],
+            'phone'             => ['nullable', 'string', 'max:50'],
+            'role_id'           => [$employee ? 'sometimes' : 'required', 'exists:roles,id'],
+            'pin'               => ['nullable', 'string', 'max:20'],
+            'is_active'         => ['sometimes', 'boolean'],
+            'extra_permissions' => ['sometimes', 'nullable', 'array'],
+            'extra_permissions.*' => ['string'],
         ]);
     }
 }

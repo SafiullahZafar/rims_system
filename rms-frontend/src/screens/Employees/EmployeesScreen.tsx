@@ -16,6 +16,7 @@ import {
   Mail,
   Shield,
   RefreshCw,
+  Clock,
 } from 'lucide-react';
 
 export const EmployeesScreen: React.FC = () => {
@@ -211,11 +212,25 @@ export const EmployeesScreen: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => navigate('/attendance')}
+                          className="p-2 rounded-xl text-[#2E7D32] bg-[#2E7D32]/10 border border-[#2E7D32]/20 hover:bg-[#2E7D32]/20 transition-all cursor-pointer"
+                          title="View Attendance logs"
+                        >
+                          <Clock className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => navigate('/roles-access')}
+                          className="p-2 rounded-xl text-[#1565C0] bg-[#1565C0]/10 border border-[#1565C0]/20 hover:bg-[#1565C0]/20 transition-all cursor-pointer"
+                          title="Configure staff access permissions"
+                        >
+                          <Shield className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           onClick={() => navigate(`/employees/${emp.id}/edit`)}
                           className="p-2 rounded-xl text-[#FF7A10] bg-[#FFF2E8] border border-[#FF7A10]/20 hover:bg-[#FFE6D5] transition-all cursor-pointer"
-                          title="Edit employee details"
+                          title="Edit employee details & permissions"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>

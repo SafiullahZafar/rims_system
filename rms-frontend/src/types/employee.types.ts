@@ -16,8 +16,11 @@ export interface Employee {
   phone?: string;
   role_id?: number;
   is_active: boolean;
+  extra_permissions?: string[];
   role?: {
     id: number;
     name: string;
+    permissions?: string[];
   };
 }
+

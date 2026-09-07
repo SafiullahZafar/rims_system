@@ -52,7 +52,10 @@ class LoginCredential
         }
 
         $roleName = $employee->role ? $employee->role->name : 'Employee';
-        $permissions = $employee->role ? ($employee->role->permissions ?? []) : [];
+        $rolePermissions  = $employee->role ? ($employee->role->permissions ?? []) : [];
+        $extraPermissions = $employee->extra_permissions ?? [];
+        // Merge: role permissions PLUS any individual overrides (no duplicates)
+        $permissions = array_values(array_unique(array_merge($rolePermissions, $extraPermissions)));
 
         // Determine default screen based on permissions
         $screen = 'tables';

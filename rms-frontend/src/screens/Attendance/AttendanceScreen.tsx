@@ -15,11 +15,22 @@ import {
   AlertCircle,
   X,
   Save,
+  CheckSquare,
+  ClipboardList,
 } from 'lucide-react';
 
 const todayDate = () => new Date().toISOString().slice(0, 10);
 
 type AttendanceStatus = 'present' | 'absent' | 'late' | 'half-day';
+
+interface BulkEntry {
+  employee_id: number;
+  name: string;
+  status: AttendanceStatus;
+  check_in: string;
+  check_out: string;
+  notes: string;
+}
 
 export const AttendanceScreen: React.FC = () => {
   const addNotification = useAppStore((s) => s.addNotification);
@@ -30,7 +41,7 @@ export const AttendanceScreen: React.FC = () => {
   const [filterDate, setFilterDate] = useState(todayDate());
   const [filterEmpId, setFilterEmpId] = useState('');
 
-  // Modal State
+  // Single log modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editLog, setEditLog] = useState<AttendanceLog | null>(null);
   const [modalEmpId, setModalEmpId] = useState('');
@@ -40,6 +51,12 @@ export const AttendanceScreen: React.FC = () => {
   const [modalStatus, setModalStatus] = useState<AttendanceStatus>('present');
   const [modalNotes, setModalNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Bulk mark mode
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [bulkDate, setBulkDate] = useState(todayDate());
+  const [bulkEntries, setBulkEntries] = useState<BulkEntry[]>([]);
+  const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
 
   const fetchAttendanceData = useCallback(async () => {
     setIsLoading(true);
@@ -63,6 +80,87 @@ export const AttendanceScreen: React.FC = () => {
   useEffect(() => {
     fetchAttendanceData();
   }, [fetchAttendanceData]);
+
+  // When bulk mode opens, prefill all active employees
+  const openBulkMode = async () => {
+    // Fetch fresh employees list
+    let emps = employees;
+    if (emps.length === 0) {
+      try {
+        emps = await api.getEmployees();
+        setEmployees(emps);
+      } catch {
+        addNotification('Failed to load employees.', 'error');
+        return;
+      }
+    }
+    const activeEmps = emps.filter((e) => e.is_active);
+    // Prefill with existing logs for bulkDate
+    const existingLogs = await api.getAttendanceLogs({ date: bulkDate });
+    const entries: BulkEntry[] = activeEmps.map((emp) => {
+      const existing = existingLogs.find((l: AttendanceLog) => l.employee_id === emp.id);
+      return {
+        employee_id: emp.id,
+        name: emp.name,
+        status: existing?.status ?? 'present',
+        check_in: existing?.check_in ?? '09:00',
+        check_out: existing?.check_out ?? '17:00',
+        notes: existing?.notes ?? '',
+      };
+    });
+    setBulkEntries(entries);
+    setIsBulkMode(true);
+  };
+
+  const updateBulkEntry = (idx: number, field: keyof BulkEntry, value: string) => {
+    setBulkEntries((prev) => {
+      const next = [...prev];
+      (next[idx] as any)[field] = value;
+      // Auto clear times if absent
+      if (field === 'status' && value === 'absent') {
+        next[idx].check_in = '';
+        next[idx].check_out = '';
+      }
+      return next;
+    });
+  };
+
+  const applyStatusToAll = (status: AttendanceStatus) => {
+    setBulkEntries((prev) =>
+      prev.map((e) => ({
+        ...e,
+        status,
+        check_in: status === 'absent' ? '' : e.check_in || '09:00',
+        check_out: status === 'absent' ? '' : e.check_out || '17:00',
+      }))
+    );
+  };
+
+  const handleBulkSave = async () => {
+    setIsBulkSubmitting(true);
+    try {
+      await Promise.all(
+        bulkEntries.map((entry) =>
+          api.createAttendanceLog({
+            employee_id: entry.employee_id,
+            date: bulkDate,
+            check_in: entry.status !== 'absent' ? entry.check_in || undefined : undefined,
+            check_out: entry.status !== 'absent' ? entry.check_out || undefined : undefined,
+            status: entry.status,
+            notes: entry.notes || undefined,
+          })
+        )
+      );
+      addNotification(`Attendance marked for ${bulkEntries.length} employees on ${bulkDate}.`, 'success');
+      setIsBulkMode(false);
+      setFilterDate(bulkDate);
+      fetchAttendanceData();
+    } catch {
+      addNotification('Some entries failed. Please check and retry.', 'error');
+    } finally {
+      setIsBulkSubmitting(false);
+    }
+  };
 
   const openLogModal = (log?: AttendanceLog) => {
     if (log) {
@@ -116,16 +214,172 @@ export const AttendanceScreen: React.FC = () => {
     }
   };
 
+  const quickSetStatus = async (log: AttendanceLog, targetStatus: AttendanceStatus) => {
+    try {
+      await api.updateAttendanceLog(log.id, {
+        employee_id: log.employee_id,
+        date: log.date,
+        status: targetStatus,
+        check_in: targetStatus === 'absent' ? undefined : log.check_in || '09:00',
+        check_out: targetStatus === 'absent' ? undefined : log.check_out || '17:00',
+      });
+      addNotification(`Updated status to ${targetStatus.toUpperCase()} for ${log.employeeName || 'staff member'}.`, 'success');
+      fetchAttendanceData();
+    } catch {
+      addNotification('Failed to update attendance status.', 'error');
+    }
+  };
+
   const presentCount = logs.filter((l) => l.status === 'present').length;
   const lateCount = logs.filter((l) => l.status === 'late').length;
   const absentCount = logs.filter((l) => l.status === 'absent').length;
   const halfDayCount = logs.filter((l) => l.status === 'half-day').length;
 
+  const statusColors: Record<AttendanceStatus, string> = {
+    present: 'bg-[#2E7D32]/10 text-[#2E7D32] border-[#2E7D32]/20',
+    absent:  'bg-[#C62828]/10 text-[#C62828] border-[#C62828]/20',
+    late:    'bg-[#FF7A10]/10 text-[#FF7A10] border-[#FF7A10]/20',
+    'half-day': 'bg-[#1565C0]/10 text-[#1565C0] border-[#1565C0]/20',
+  };
+
+  // ── Bulk Mark Mode UI ────────────────────────────────────────────────────────
+  if (isBulkMode) {
+    return (
+      <PageWrapper className="h-full overflow-y-auto bg-white">
+        <div className="p-6 max-w-[1200px] mx-auto pb-24 md:pb-8">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-xl font-black text-[#1F221D]">Bulk Attendance Mark</h1>
+              <p className="text-xs text-[#666A64] mt-0.5">Mark attendance for all active employees at once</p>
+            </div>
+            <button
+              onClick={() => setIsBulkMode(false)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#666A64] bg-[#F7F5F2] border border-[#E9E5E1] hover:bg-[#E9E5E1] transition-all cursor-pointer"
+            >
+              <X className="w-4 h-4" /> Cancel
+            </button>
+          </div>
+
+          {/* Controls */}
+          <div className="bg-white border border-[#E9E5E1] rounded-2xl p-4 mb-4 flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[#666A64]" />
+              <label className="text-xs font-bold text-[#666A64]">Date:</label>
+              <input
+                type="date"
+                value={bulkDate}
+                onChange={(e) => setBulkDate(e.target.value)}
+                className="bg-[#F7F5F2] border border-[#E9E5E1] rounded-xl px-3 py-1.5 text-xs text-[#1F221D] outline-none focus:border-[#FF7A10]"
+              />
+            </div>
+            <div className="flex-1" />
+            <span className="text-xs font-bold text-[#666A64]">Quick Apply All:</span>
+            {(['present', 'late', 'absent', 'half-day'] as AttendanceStatus[]).map((s) => (
+              <button
+                key={s}
+                onClick={() => applyStatusToAll(s)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase border transition-all cursor-pointer capitalize ${statusColors[s]}`}
+              >
+                All {s}
+              </button>
+            ))}
+          </div>
+
+          {/* Employee Grid */}
+          <div className="bg-white border border-[#E9E5E1] rounded-2xl overflow-hidden shadow-xs mb-4">
+            <div className="bg-[#F7F5F2] border-b border-[#E9E5E1] px-5 py-3 grid grid-cols-[1fr_130px_80px_80px_1fr] gap-3 text-[10px] font-extrabold uppercase tracking-wider text-[#666A64]">
+              <span>Employee</span>
+              <span>Status</span>
+              <span>Check In</span>
+              <span>Check Out</span>
+              <span>Notes</span>
+            </div>
+
+            <div className="divide-y divide-[#E9E5E1]">
+              {bulkEntries.map((entry, idx) => (
+                <div
+                  key={entry.employee_id}
+                  className="px-5 py-3 grid grid-cols-[1fr_130px_80px_80px_1fr] gap-3 items-center hover:bg-[#F7F5F2]/40 transition-colors"
+                >
+                  {/* Name */}
+                  <span className="text-xs font-bold text-[#1F221D] truncate">{entry.name}</span>
+
+                  {/* Status */}
+                  <select
+                    value={entry.status}
+                    onChange={(e) => updateBulkEntry(idx, 'status', e.target.value)}
+                    className={`text-[10px] font-extrabold rounded-lg px-2 py-1.5 border outline-none cursor-pointer capitalize ${statusColors[entry.status]}`}
+                  >
+                    <option value="present">Present</option>
+                    <option value="late">Late</option>
+                    <option value="absent">Absent</option>
+                    <option value="half-day">Half-Day</option>
+                  </select>
+
+                  {/* Check In */}
+                  <input
+                    type="time"
+                    value={entry.check_in}
+                    disabled={entry.status === 'absent'}
+                    onChange={(e) => updateBulkEntry(idx, 'check_in', e.target.value)}
+                    className="bg-[#F7F5F2] border border-[#E9E5E1] rounded-lg px-2 py-1.5 text-[10px] font-mono text-[#1F221D] outline-none focus:border-[#FF7A10] disabled:opacity-40 w-full"
+                  />
+
+                  {/* Check Out */}
+                  <input
+                    type="time"
+                    value={entry.check_out}
+                    disabled={entry.status === 'absent'}
+                    onChange={(e) => updateBulkEntry(idx, 'check_out', e.target.value)}
+                    className="bg-[#F7F5F2] border border-[#E9E5E1] rounded-lg px-2 py-1.5 text-[10px] font-mono text-[#1F221D] outline-none focus:border-[#FF7A10] disabled:opacity-40 w-full"
+                  />
+
+                  {/* Notes */}
+                  <input
+                    type="text"
+                    value={entry.notes}
+                    onChange={(e) => updateBulkEntry(idx, 'notes', e.target.value)}
+                    placeholder="Optional note…"
+                    className="bg-[#F7F5F2] border border-[#E9E5E1] rounded-lg px-3 py-1.5 text-[10px] text-[#1F221D] outline-none focus:border-[#FF7A10] w-full"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Save button */}
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setIsBulkMode(false)}
+              className="px-5 py-2.5 rounded-xl text-xs font-semibold text-[#666A64] bg-[#F7F5F2] border border-[#E9E5E1] hover:bg-[#E9E5E1] transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleBulkSave}
+              disabled={isBulkSubmitting}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#FF7A10] hover:bg-[#E86000] transition-all cursor-pointer disabled:opacity-50"
+            >
+              {isBulkSubmitting ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Save All {bulkEntries.length} Entries
+            </button>
+          </div>
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  // ── Normal Attendance View ───────────────────────────────────────────────────
   return (
     <PageWrapper className="h-full overflow-y-auto bg-white">
       <div className="p-6 max-w-[1600px] mx-auto pb-24 md:pb-8">
         <PageHeader
-          title="Attendance & Clock Logs"
+          title="Attendance &amp; Clock Logs"
           subtitle="Monitor daily employee check-ins, shift hours, and clock-in records"
           breadcrumb="People / Attendance"
           icon={Clock}
@@ -135,57 +389,38 @@ export const AttendanceScreen: React.FC = () => {
             onClick: () => openLogModal(),
           }}
           secondaryActions={
-            <button
-              onClick={fetchAttendanceData}
-              disabled={isLoading}
-              className="p-2.5 rounded-xl bg-[#F7F5F2] border border-[#E9E5E1] text-[#666A64] hover:text-[#1F221D] transition-all cursor-pointer disabled:opacity-50"
-              title="Refresh logs"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={openBulkMode}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1F221D] text-white text-xs font-bold hover:bg-[#333] transition-all cursor-pointer"
+                title="Mark attendance for all employees at once"
+              >
+                <ClipboardList className="w-4 h-4" />
+                Bulk Mark All
+              </button>
+              <button
+                onClick={fetchAttendanceData}
+                disabled={isLoading}
+                className="p-2.5 rounded-xl bg-[#F7F5F2] border border-[#E9E5E1] text-[#666A64] hover:text-[#1F221D] transition-all cursor-pointer disabled:opacity-50"
+                title="Refresh logs"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           }
         />
 
         {/* Stats Strip */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatsCard
-            title="Present Today"
-            value={presentCount}
-            icon={UserCheck}
-            accent="#2E7D32"
-            trend="On duty"
-            trendPositive
-          />
-          <StatsCard
-            title="Late Arrivals"
-            value={lateCount}
-            icon={AlertCircle}
-            accent="#FF7A10"
-            trend="Flagged check-ins"
-            trendPositive={false}
-          />
-          <StatsCard
-            title="Absent Staff"
-            value={absentCount}
-            icon={UserX}
-            accent="#C62828"
-            trend="Unscheduled absence"
-            trendPositive={false}
-          />
-          <StatsCard
-            title="Half-Day Shifts"
-            value={halfDayCount}
-            icon={Clock}
-            accent="#1565C0"
-            trend="Partial shifts"
-            trendPositive
-          />
+          <StatsCard title="Present Today"  value={presentCount}  icon={UserCheck}    accent="#2E7D32" trend="On duty"             trendPositive />
+          <StatsCard title="Late Arrivals"  value={lateCount}     icon={AlertCircle}  accent="#FF7A10" trend="Flagged check-ins"   trendPositive={false} />
+          <StatsCard title="Absent Staff"   value={absentCount}   icon={UserX}        accent="#C62828" trend="Unscheduled absence" trendPositive={false} />
+          <StatsCard title="Half-Day Shifts" value={halfDayCount} icon={Clock}        accent="#1565C0" trend="Partial shifts"      trendPositive />
         </div>
 
         {/* Filter Controls */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6 items-center justify-between">
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            {/* Date filter */}
             <div className="relative flex items-center">
               <Calendar className="w-4 h-4 absolute left-3.5 text-[#666A64]" />
               <input
@@ -195,8 +430,6 @@ export const AttendanceScreen: React.FC = () => {
                 className="bg-[#F7F5F2] border border-[#E9E5E1] rounded-xl pl-10 pr-4 py-2 text-xs text-[#1F221D] outline-none focus:border-[#FF7A10] transition-all"
               />
             </div>
-
-            {/* Employee filter */}
             <div className="relative">
               <select
                 value={filterEmpId}
@@ -229,6 +462,13 @@ export const AttendanceScreen: React.FC = () => {
             <p className="text-xs text-[#666A64] mt-1 max-w-sm">
               No clock logs match the selected date or employee filter.
             </p>
+            <button
+              onClick={openBulkMode}
+              className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FF7A10] text-white text-xs font-bold hover:bg-[#E86000] transition-all cursor-pointer"
+            >
+              <CheckSquare className="w-4 h-4" />
+              Bulk Mark Attendance for {filterDate}
+            </button>
           </div>
         ) : (
           <div className="bg-white border border-[#E9E5E1] rounded-2xl overflow-hidden shadow-xs">
@@ -259,15 +499,7 @@ export const AttendanceScreen: React.FC = () => {
                     </td>
                     <td className="px-5 py-4">
                       <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-extrabold capitalize ${
-                          log.status === 'present'
-                            ? 'bg-[#2E7D32]/10 text-[#2E7D32] border border-[#2E7D32]/20'
-                            : log.status === 'absent'
-                            ? 'bg-[#C62828]/10 text-[#C62828] border border-[#C62828]/20'
-                            : log.status === 'late'
-                            ? 'bg-[#FF7A10]/10 text-[#FF7A10] border border-[#FF7A10]/20'
-                            : 'bg-[#1565C0]/10 text-[#1565C0] border border-[#1565C0]/20'
-                        }`}
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-extrabold capitalize border ${statusColors[log.status]}`}
                       >
                         {log.status}
                       </span>
@@ -276,12 +508,37 @@ export const AttendanceScreen: React.FC = () => {
                       {log.notes || '—'}
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <button
-                        onClick={() => openLogModal(log)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#FF7A10] bg-[#FFF2E8] border border-[#FF7A10]/20 hover:bg-[#FFE6D5] transition-all cursor-pointer"
-                      >
-                        Edit
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => quickSetStatus(log, 'present')}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
+                            log.status === 'present'
+                              ? 'bg-[#2E7D32] text-white shadow-2xs'
+                              : 'bg-[#2E7D32]/10 text-[#2E7D32] border border-[#2E7D32]/20 hover:bg-[#2E7D32]/20'
+                          }`}
+                          title="Set status to Present"
+                        >
+                          Present
+                        </button>
+                        <button
+                          onClick={() => quickSetStatus(log, 'absent')}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
+                            log.status === 'absent'
+                              ? 'bg-[#C62828] text-white shadow-2xs'
+                              : 'bg-[#C62828]/10 text-[#C62828] border border-[#C62828]/20 hover:bg-[#C62828]/20'
+                          }`}
+                          title="Set status to Absent"
+                        >
+                          Absent
+                        </button>
+                        <button
+                          onClick={() => openLogModal(log)}
+                          className="px-2.5 py-1 rounded-lg text-[10px] font-semibold text-[#FF7A10] bg-[#FFF2E8] border border-[#FF7A10]/20 hover:bg-[#FFE6D5] transition-all cursor-pointer"
+                          title="Edit full log details"
+                        >
+                          Edit
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -290,7 +547,7 @@ export const AttendanceScreen: React.FC = () => {
           </div>
         )}
 
-        {/* Modal Form */}
+        {/* Single Entry Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
             <div className="bg-white border border-[#E9E5E1] rounded-2xl w-full max-w-md p-6 shadow-xl relative">
@@ -347,7 +604,8 @@ export const AttendanceScreen: React.FC = () => {
                       type="time"
                       value={modalCheckIn}
                       onChange={(e) => setModalCheckIn(e.target.value)}
-                      className="w-full bg-[#F7F5F2] border border-[#E9E5E1] rounded-xl px-4 py-2 text-xs text-[#1F221D] outline-none focus:border-[#FF7A10]"
+                      disabled={modalStatus === 'absent'}
+                      className="w-full bg-[#F7F5F2] border border-[#E9E5E1] rounded-xl px-4 py-2 text-xs text-[#1F221D] outline-none focus:border-[#FF7A10] disabled:opacity-40"
                     />
                   </div>
                   <div>
@@ -358,7 +616,8 @@ export const AttendanceScreen: React.FC = () => {
                       type="time"
                       value={modalCheckOut}
                       onChange={(e) => setModalCheckOut(e.target.value)}
-                      className="w-full bg-[#F7F5F2] border border-[#E9E5E1] rounded-xl px-4 py-2 text-xs text-[#1F221D] outline-none focus:border-[#FF7A10]"
+                      disabled={modalStatus === 'absent'}
+                      className="w-full bg-[#F7F5F2] border border-[#E9E5E1] rounded-xl px-4 py-2 text-xs text-[#1F221D] outline-none focus:border-[#FF7A10] disabled:opacity-40"
                     />
                   </div>
                 </div>

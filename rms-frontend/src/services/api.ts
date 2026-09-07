@@ -192,7 +192,8 @@ interface BackendEmployee {
   phone?: string | null;
   role_id?: number | null;
   is_active: boolean | number;
-  role?: { id: number; name: string } | null;
+  extra_permissions?: string[] | null;
+  role?: { id: number; name: string; permissions?: string[] } | null;
 }
 
 export const mapEmployee = (e: BackendEmployee): Employee => ({
@@ -202,7 +203,8 @@ export const mapEmployee = (e: BackendEmployee): Employee => ({
   phone: e.phone ?? undefined,
   role_id: e.role_id ?? undefined,
   is_active: Boolean(e.is_active),
-  role: e.role ? { id: e.role.id, name: e.role.name } : undefined,
+  extra_permissions: Array.isArray(e.extra_permissions) ? e.extra_permissions : undefined,
+  role: e.role ? { id: e.role.id, name: e.role.name, permissions: Array.isArray(e.role.permissions) ? e.role.permissions : undefined } : undefined,
 });
 
 // ─── Expenses ─────────────────────────────────────────────────────────────────

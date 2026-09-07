@@ -17,6 +17,7 @@ class Employee extends Authenticatable
         'pin',
         'password',
         'is_active',
+        'extra_permissions',
     ];
 
     protected $hidden = [
@@ -27,7 +28,8 @@ class Employee extends Authenticatable
     protected function casts(): array
     {
         return [
-            'is_active' => 'boolean',
+            'is_active'         => 'boolean',
+            'extra_permissions' => 'array',
         ];
     }
 
