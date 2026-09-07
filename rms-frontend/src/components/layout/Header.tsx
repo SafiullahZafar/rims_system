@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumb, onMenuClick }
     d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   return (
-    <header className="bg-white border-b border-[#E9E5E1] px-6 py-3 flex items-center justify-between select-none flex-shrink-0 gap-4">
+    <header className="h-16 bg-white border-b border-[#E9E5E1] px-6 flex items-center justify-between select-none flex-shrink-0 gap-4">
       {/* Left: Mobile Toggle + Breadcrumb & Title */}
       <div className="flex items-center gap-3.5 flex-shrink-0">
         {onMenuClick && (

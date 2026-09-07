@@ -50,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       )}
     >
       {/* Brand Header with Hover Stretch / Compress Toggle */}
-      <div className={twMerge(clsx('py-4 flex items-center border-b border-[#E9E5E1] flex-shrink-0 bg-white', { 'px-4 justify-between': !collapsed, 'px-3 justify-center': collapsed }))}>
+      <div className={twMerge(clsx('h-16 flex items-center border-b border-[#E9E5E1] flex-shrink-0 bg-white', { 'px-4 justify-between': !collapsed, 'px-3 justify-center': collapsed }))}>
         {collapsed ? (
           <button
             onClick={onToggle}
@@ -184,36 +184,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
               logout();
               navigate('/login');
             }}
-            className={twMerge(
-              clsx(
-                'flex items-center justify-center p-2 rounded-xl text-[#C62828] bg-[#C62828]/10 border border-[#C62828]/20 hover:bg-[#C62828]/20 transition-all cursor-pointer',
-                { 'flex-1 gap-2 text-xs font-bold uppercase tracking-wider': !collapsed, 'w-full': collapsed }
-              )
-            )}
+            className="w-full flex items-center justify-center p-2 rounded-xl text-[#C62828] bg-[#C62828]/10 border border-[#C62828]/20 hover:bg-[#C62828]/20 transition-all cursor-pointer gap-2 text-xs font-bold uppercase tracking-wider"
           >
             <LogOut className="w-4 h-4 flex-shrink-0" />
             {!collapsed && <span>Logout</span>}
           </button>
-
-          {!collapsed && (
-            <button
-              onClick={onToggle}
-              className="p-2 rounded-xl bg-[#F7F5F2] border border-[#E9E5E1] text-[#666A64] hover:text-[#1F221D] hover:bg-[#E9E5E1] transition-all cursor-pointer"
-              title="Collapse sidebar"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-          )}
-
-          {collapsed && (
-            <button
-              onClick={onToggle}
-              className="absolute -right-5 top-1/2 -translate-y-1/2 w-5 h-5 bg-[#FF7A10] text-white rounded-full flex items-center justify-center hover:scale-110 transition-all cursor-pointer z-50 shadow-md"
-              title="Expand sidebar"
-            >
-              <ChevronRight className="w-3 h-3" />
-            </button>
-          )}
         </div>
       </div>
     </aside>
