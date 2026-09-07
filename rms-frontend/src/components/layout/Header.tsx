@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useTime } from '../../hooks/useTime';
 import { useAppStore } from '../../store/useAppStore';
 import { Bell, Menu } from 'lucide-react';
@@ -22,44 +22,43 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumb, onMenuClick }
     d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   return (
-    <header className="bg-white border-b border-[#1F221D]/10 px-6 py-3.5 flex items-center justify-between select-none flex-shrink-0">
-
+    <header className="bg-white border-b border-[#E9E5E1] px-5 py-3 flex items-center justify-between select-none flex-shrink-0">
       {/* Left: menu toggle + title */}
       <div className="flex items-center gap-3">
         {onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-xl bg-[#F4F2F0] border border-[#1F221D]/10 text-[#555754] hover:text-[#1F221D] cursor-pointer"
+            className="md:hidden p-2 rounded-xl bg-[#F7F5F2] border border-[#E9E5E1] text-[#666A64] hover:text-[#1F221D] cursor-pointer transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
         )}
         <div className="flex flex-col">
           {breadcrumb && (
-            <span className="text-[10px] uppercase tracking-widest font-bold text-[#555754]">
+            <span className="text-[10px] uppercase tracking-widest font-bold text-[#666A64]">
               {breadcrumb}
             </span>
           )}
-          <h2 className="text-lg font-black text-[#1F221D] leading-tight">{title}</h2>
+          <h2 className="text-base font-bold text-[#1F221D] leading-tight tracking-tight">{title}</h2>
         </div>
       </div>
 
       {/* Center: date/time */}
-      <div className="hidden md:flex flex-col items-center">
-        <span className="text-sm font-black text-[#FF7A10] tracking-wider font-mono">
+      <div className="hidden sm:flex flex-col items-center">
+        <span className="text-xs font-extrabold text-[#FF7A10] tracking-wider font-mono">
           {formatTime(time)}
         </span>
-        <span className="text-[10px] text-[#555754] font-semibold uppercase tracking-wider">
+        <span className="text-[10px] text-[#666A64] font-semibold uppercase tracking-wider">
           {formatDate(time)}
         </span>
       </div>
 
       {/* Right: notifications + avatar */}
       <div className="flex items-center gap-3">
-        <button className="relative p-2.5 rounded-xl bg-[#F4F2F0] border border-[#1F221D]/10 text-[#555754] hover:text-[#1F221D] transition-all cursor-pointer">
-          <Bell className="w-4.5 h-4.5 w-[18px] h-[18px]" />
+        <button className="relative p-2 rounded-xl bg-[#F7F5F2] border border-[#E9E5E1] text-[#666A64] hover:text-[#1F221D] transition-all cursor-pointer">
+          <Bell className="w-4 h-4" />
           {notifications.length > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF7A10] rounded-full" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF7A10] rounded-full animate-pulse" />
           )}
         </button>
         <Avatar name={userName || 'User'} size="md" />

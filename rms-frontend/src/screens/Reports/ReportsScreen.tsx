@@ -12,10 +12,10 @@ import { Expense } from '../../types';
 // ─── Shared utils ─────────────────────────────────────────────────────────────
 
 const inputBase =
-  'bg-[#F4F2F0] border border-[#1F221D]/10 rounded-xl px-3 py-2 text-sm text-[#1F221D] focus:outline-none focus:border-[#FF7A10]/50 focus:bg-white transition-all duration-200';
+  'bg-[#F7F5F2] border border-[#E9E5E1] rounded-xl px-3 py-2 text-sm text-[#1F221D] focus:outline-none focus:border-[#FF7A10] focus:bg-white transition-all duration-200';
 
 const labelCls =
-  'text-xs font-semibold text-[#555754] uppercase tracking-wider mb-1 block';
+  'text-xs font-bold text-[#666A64] uppercase tracking-wider mb-1 block';
 
 const formatPKR = (val: number) =>
   'PKR ' + val.toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -383,7 +383,7 @@ export const ReportsScreen: React.FC = () => {
   ];
 
   return (
-    <PageWrapper className="h-full overflow-y-auto bg-[#F4F2F0]">
+    <PageWrapper className="h-full overflow-y-auto bg-white">
       <div className="p-4 sm:p-6 max-w-7xl mx-auto">
         {/* Page header */}
         <div className="flex items-center gap-3 mb-6">

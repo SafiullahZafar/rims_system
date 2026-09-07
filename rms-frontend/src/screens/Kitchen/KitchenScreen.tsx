@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useKitchenStore } from '../../store/useKitchenStore';
 import { useTableStore } from '../../store/useTableStore';
 import { useAppStore } from '../../store/useAppStore';
@@ -108,25 +108,25 @@ export const KitchenScreen: React.FC = () => {
   const orders = useKitchenStore((s) => s.orders);
 
   return (
-    <PageWrapper className="h-full overflow-hidden p-4 bg-[#F4F2F0]">
-      <div className="h-full grid grid-cols-1 md:grid-cols-3 gap-4">
+    <PageWrapper className="h-full overflow-hidden p-6 bg-white">
+      <div className="h-full grid grid-cols-1 md:grid-cols-3 gap-6">
         {COLUMNS.map((col) => {
           const colOrders = orders.filter((o) => o.status === col.status);
           return (
-            <div key={col.status} className={`flex flex-col bg-white border-t-4 ${col.topColor} border border-[#1F221D]/10 rounded-2xl overflow-hidden`}>
-              <div className="flex items-center justify-between px-4 py-3.5 border-b border-[#1F221D]/06">
+            <div key={col.status} className="flex flex-col bg-[#F9F9F9] border border-[#EBEBEB] rounded-2xl overflow-hidden">
+              <div className={`flex items-center justify-between px-5 py-4 border-t-4 ${col.topColor} bg-white border-b border-[#EBEBEB]`}>
                 <div className="flex items-center gap-2">
                   {col.icon}
-                  <span className="font-semibold text-sm text-[#1F221D]">{col.label}</span>
+                  <span className="font-bold text-sm text-[#1F221D] tracking-tight">{col.label}</span>
                 </div>
-                <span className="w-6 h-6 rounded-full bg-[#ECEAE7] text-[#555754] text-xs font-semibold flex items-center justify-center">
+                <span className="px-2.5 py-0.5 rounded-full bg-[#F0F0F0] text-[#555754] text-xs font-bold">
                   {colOrders.length}
                 </span>
               </div>
-              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {colOrders.length === 0 ? (
-                  <div className="flex items-center justify-center h-32">
-                    <p className="text-xs text-[#555754] font-medium">No orders</p>
+                  <div className="flex items-center justify-center h-32 border-2 border-dashed border-[#EBEBEB] rounded-xl">
+                    <p className="text-xs text-[#A0A0A0] font-medium">No active orders</p>
                   </div>
                 ) : (
                   colOrders.map((order) => <KitchenCard key={order.id} order={order} />)
