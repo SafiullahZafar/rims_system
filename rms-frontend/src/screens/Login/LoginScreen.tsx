@@ -1,20 +1,32 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToast } from '../../hooks/useToast';
-import { Utensils, User, Delete, ShieldCheck } from 'lucide-react';
+import {
+  UtensilsCrossed,
+  ShieldCheck,
+  UserCheck,
+  MapPin,
+  Sparkles,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  ArrowRight,
+  Delete,
+} from 'lucide-react';
 import { gsap } from 'gsap';
-import styles from './LoginScreen.module.css';
 
-type LoginRole = 'employee' | 'admin';
+type LoginRole = 'admin' | 'employee';
 
 export const LoginScreen: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState<LoginRole>('admin');
   const [pin, setPin] = useState('');
   const [adminEmail, setAdminEmail] = useState('safullahzafar@gmail.com');
-  const [adminPassword, setAdminPassword] = useState('');
-  const [open, setOpen] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('123456');
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const setUserRole = useAppStore((state) => state.setUserRole);
@@ -22,45 +34,30 @@ export const LoginScreen: React.FC = () => {
   const toast = useToast();
 
   const cardRef = useRef<HTMLDivElement>(null);
-  const pinInputRef = useRef<HTMLDivElement>(null);
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-    tl.fromTo(cardRef.current, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 });
-    tl.fromTo(pinInputRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4 }, '-=0.3');
-    tl.fromTo(btnRef.current, { scale: 0.95, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3 }, '-=0.2');
+    if (cardRef.current) {
+      tl.fromTo(cardRef.current, { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 });
+    }
   }, []);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (selectedRole === 'admin') return;
-      if (/^[0-9]$/.test(e.key)) { handleKeyPress(e.key); }
-      else if (e.key === 'Backspace') { handleBackspace(); }
-      else if (e.key === 'Enter') { e.preventDefault(); handleSignIn(); }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pin, selectedRole]);
-
-  const handleKeyPress = (num: string) => { if (pin.length < 4) setPin((prev) => prev + num); };
+  const handleKeyPress = (num: string) => {
+    if (pin.length < 4) setPin((prev) => prev + num);
+  };
   const handleBackspace = () => setPin((prev) => prev.slice(0, -1));
 
   const handleSignIn = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (selectedRole !== 'admin' && pin.length < 4) { toast.error('Enter your 4-digit PIN.'); return; }
-    if (selectedRole === 'admin' && (!adminEmail || !adminPassword)) { toast.error('Enter admin email and password.'); return; }
+    if (selectedRole === 'employee' && pin.length < 4) {
+      toast.error('Please enter your 4-digit shift PIN.');
+      return;
+    }
+    if (selectedRole === 'admin' && (!adminEmail || !adminPassword)) {
+      toast.error('Please enter admin email and password.');
+      return;
+    }
 
     const response = await login(
       selectedRole,
@@ -69,133 +66,308 @@ export const LoginScreen: React.FC = () => {
 
     if (response) {
       setUserRole(selectedRole, response.permissions, response.token, response.name, response.role_name);
-      toast.success(`${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Login Successful!`);
-      gsap.to(cardRef.current, {
-        y: -30, opacity: 0, duration: 0.4, ease: 'power2.in',
-        onComplete: () => {
-          const finalScreen = response.screen === 'staff' ? 'tables' : response.screen;
-          navigate('/' + finalScreen);
-        }
-      });
+      toast.success(`${selectedRole === 'admin' ? 'Administrator' : 'Staff'} Signed In Successfully!`);
+      const finalScreen = response.screen === 'staff' ? 'tables' : response.screen;
+      navigate('/' + finalScreen);
     } else {
-      toast.error(selectedRole === 'admin' ? 'Invalid admin email or password.' : 'Invalid PIN.');
+      toast.error(selectedRole === 'admin' ? 'Invalid admin email or password.' : 'Invalid shift PIN.');
       setPin('');
     }
   };
 
-  const handleBtnMouseEnter = () => { if (btnRef.current) gsap.to(btnRef.current, { scale: 1.03, duration: 0.2, ease: 'power1.out' }); };
-  const handleBtnMouseLeave = () => { if (btnRef.current) gsap.to(btnRef.current, { scale: 1, duration: 0.2, ease: 'power1.out' }); };
+  // Quick 1-click Demo Fill
+  const fillDemoAdmin = () => {
+    setSelectedRole('admin');
+    setAdminEmail('admin@restopos.com');
+    setAdminPassword('admin123');
+    toast.info('Loaded Demo Admin credentials.');
+  };
+
+  const fillDemoEmployee = () => {
+    setSelectedRole('employee');
+    setPin('1234');
+    toast.info('Loaded Demo Staff PIN (1234).');
+  };
 
   return (
-    <div className="flex min-h-screen bg-[#F4F2F0] w-full overflow-hidden font-sans">
-
-      {/* LEFT IMAGE SIDE */}
+    <div className="flex min-h-screen bg-[#F7F5F2] w-full overflow-hidden font-sans select-none">
+      {/* LEFT HERO BRANDING PANEL */}
       <div
-        className="hidden md:flex w-[60%] relative bg-cover bg-center"
-        style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1559329007-40df8a9345d8?q=80&w=1974&auto=format&fit=crop)' }}
+        className="hidden lg:flex lg:w-[55%] xl:w-[60%] relative bg-cover bg-center p-12 flex-col justify-between overflow-hidden"
+        style={{
+          backgroundImage:
+            'url(https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=2000&auto=format&fit=crop)',
+        }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        <div className="absolute bottom-12 left-12 right-12 z-10 text-white">
-          <p className="text-xl font-medium leading-relaxed max-w-lg mb-6">
-            "Serve customers the best food with prompt and friendly service in a welcoming atmosphere."
-          </p>
+        {/* Dark Warm Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1F221D]/90 via-[#1F221D]/60 to-[#1F221D]/40" />
+
+        {/* Top Header Logo */}
+        <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
-              <User className="w-5 h-5 text-white/70" />
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#FF7A10] to-[#E86000] text-white flex items-center justify-center shadow-lg border border-white/20">
+              <UtensilsCrossed className="w-6 h-6" />
             </div>
-            <span className="text-sm font-medium text-white/80">Ray Kroc, founder of Good Eats Grill</span>
+            <div>
+              <span className="font-black text-2xl text-white tracking-tight">
+                Pixora<span className="text-[#FF7A10]">RIMS</span>
+              </span>
+              <span className="block text-[10px] font-bold text-white/70 uppercase tracking-widest -mt-1">
+                Enterprise Restaurant System
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-xs text-white font-semibold">
+            <span className="w-2 h-2 rounded-full bg-[#2E7D32] animate-pulse" />
+            System Online • v2.4
+          </div>
+        </div>
+
+        {/* Center Hero Copy & Highlights */}
+        <div className="relative z-10 max-w-xl space-y-6 my-auto">
+          <div className="inline-flex items-center gap-2 bg-[#FF7A10]/20 border border-[#FF7A10]/40 text-[#FF7A10] px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider">
+            <Sparkles className="w-4 h-4" /> Next-Gen Enterprise POS
+          </div>
+
+          <h1 className="text-4xl xl:text-5xl font-black text-white leading-tight tracking-tight">
+            Streamline Orders, Inventory & Staff Operations.
+          </h1>
+
+          <p className="text-base text-white/80 leading-relaxed">
+            Real-time floor map sync, automated kitchen display queues, geofenced staff attendance, and instant sales analytics built for modern dining hospitality.
+          </p>
+
+          {/* Feature Badges Grid */}
+          <div className="grid grid-cols-3 gap-3 pt-2">
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-3 text-white">
+              <CheckCircle2 className="w-5 h-5 text-[#FF7A10] mb-1" />
+              <p className="text-xs font-bold">Real-Time POS</p>
+              <p className="text-[10px] text-white/60">Floor map sync</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-3 text-white">
+              <MapPin className="w-5 h-5 text-[#FF7A10] mb-1" />
+              <p className="text-xs font-bold">Geofence Clock</p>
+              <p className="text-[10px] text-white/60">Shift perimeter</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-3 text-white">
+              <UserCheck className="w-5 h-5 text-[#FF7A10] mb-1" />
+              <p className="text-xs font-bold">Smart Roles</p>
+              <p className="text-[10px] text-white/60">Permission matrix</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Hero Footer Branding */}
+        <div className="relative z-10 flex items-center justify-between border-t border-white/15 pt-4 text-xs text-white/70">
+          <span>Pixora RIMS Enterprise Suite</span>
+          <div className="flex items-center gap-1.5 font-medium">
+            <span>Powered by</span>
+            <span className="font-extrabold text-[#FF7A10] tracking-wide text-sm">Pixorasofttech</span>
           </div>
         </div>
       </div>
 
-      {/* RIGHT PANEL */}
-      <div className="w-full md:w-[45%] 2xl:w-[38%] bg-white border-l border-[#1F221D]/10 flex flex-col justify-center items-center relative z-10 overflow-hidden min-h-screen px-5 sm:px-8 md:px-10 lg:px-12 2xl:px-16">
-        <div ref={cardRef} className="w-full max-w-[300px] sm:max-w-[340px] md:max-w-[360px] 2xl:max-w-[320px] flex flex-col items-center scale-[0.92] sm:scale-100 2xl:scale-[0.88]">
+      {/* RIGHT FORM PANEL */}
+      <div className="w-full lg:w-[45%] xl:w-[40%] bg-white flex flex-col justify-between items-center p-6 sm:p-10 md:p-12 overflow-y-auto">
+        {/* Mobile Header Logo */}
+        <div className="lg:hidden flex items-center gap-2.5 mb-6">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#FF7A10] to-[#E86000] text-white flex items-center justify-center">
+            <UtensilsCrossed className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="font-black text-xl text-[#1F221D]">
+              Pixora<span className="text-[#FF7A10]">RIMS</span>
+            </span>
+            <span className="block text-[9px] font-bold text-[#666A64] uppercase tracking-wider">
+              Enterprise Suite
+            </span>
+          </div>
+        </div>
 
-          {/* LOGO */}
-          <div className="flex flex-col items-center text-center gap-1 sm:gap-2 mb-4 sm:mb-5 2xl:mb-4">
-            <div className="w-10 h-10 rounded-full border-2 border-[#FF7A10]/30 bg-[rgba(255,122,16,0.08)] flex items-center justify-center">
-              <Utensils className="w-4 h-4 text-[#FF7A10]" />
-            </div>
-            <p className="text-[9px] font-semibold text-[#555754] uppercase tracking-widest">RESTO POS</p>
-            <h1 className="text-[22px] sm:text-[26px] 2xl:text-[22px] font-semibold tracking-tight text-[#FF7A10]">
-              {selectedRole === 'employee' ? 'Employee Login' : 'Admin Login'}
-            </h1>
+        {/* Main Card Wrapper */}
+        <div ref={cardRef} className="w-full max-w-md my-auto flex flex-col items-center">
+          {/* Header Title */}
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-black text-[#1F221D] tracking-tight">
+              {selectedRole === 'admin' ? 'Administrator Login' : 'Staff Shift Check-In'}
+            </h2>
+            <p className="text-xs text-[#666A64] mt-1 font-medium">
+              {selectedRole === 'admin'
+                ? 'Sign in to access management control center'
+                : 'Enter your 4-digit PIN to begin your shift'}
+            </p>
           </div>
 
-          {/* ROLE SELECTOR */}
-          <div className="w-full mb-4 sm:mb-5 2xl:mb-4">
-            <p className="text-[10px] text-[#555754] mb-1.5 text-center">Choose your account to start your shift</p>
-            <div className="relative cursor-pointer" ref={dropdownRef}>
-              <div onClick={() => setOpen((prev) => !prev)}
-                className="w-full bg-[#F4F2F0] hover:bg-[#ECEAE7] transition-colors rounded-xl p-2.5 flex items-center justify-between border border-[#1F221D]/10">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-white border border-[#1F221D]/10 flex items-center justify-center">
-                    {selectedRole === 'employee' ? <Utensils className="w-4 h-4 text-[#555754]" /> : <ShieldCheck className="w-4 h-4 text-[#FF7A10]" />}
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-xs font-semibold text-[#1F221D] capitalize">{selectedRole} Account</span>
-                    <span className="text-[9px] text-[#555754]">{selectedRole === 'admin' ? 'Email and password' : 'PIN access'}</span>
-                  </div>
-                </div>
-                <div className="w-5 h-5 rounded-full bg-white border border-[#1F221D]/10 flex items-center justify-center">
-                  <div className="w-0 h-0 border-l-[3px] border-l-transparent border-r-[3px] border-r-transparent border-t-[4px] border-t-[#555754]"
-                    style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-                </div>
-              </div>
-              {open && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#1F221D]/10 rounded-xl shadow-card overflow-hidden z-50">
-                  {(['employee', 'admin'] as LoginRole[]).map((role) => (
-                    <div key={role} onClick={() => { setSelectedRole(role); setPin(''); setOpen(false); }}
-                      className="p-2.5 hover:bg-[#F4F2F0] flex items-center gap-2 cursor-pointer">
-                      <span className="text-sm font-semibold text-[#1F221D] capitalize">{role}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          {/* Role Toggle Switch */}
+          <div className="w-full bg-[#F7F5F2] border border-[#E9E5E1] p-1 rounded-2xl flex gap-1 mb-6">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedRole('admin');
+                setPin('');
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                selectedRole === 'admin'
+                  ? 'bg-white text-[#FF7A10] shadow-xs border border-[#FF7A10]/20'
+                  : 'text-[#666A64] hover:text-[#1F221D]'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" /> Admin Access
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedRole('employee');
+                setPin('');
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                selectedRole === 'employee'
+                  ? 'bg-white text-[#FF7A10] shadow-xs border border-[#FF7A10]/20'
+                  : 'text-[#666A64] hover:text-[#1F221D]'
+              }`}
+            >
+              <UserCheck className="w-4 h-4" /> Employee PIN
+            </button>
           </div>
 
           {/* FORM */}
-          <form onSubmit={handleSignIn} className="w-full flex flex-col items-center">
+          <form ref={formRef} onSubmit={handleSignIn} className="w-full space-y-4">
             {selectedRole === 'admin' ? (
-              <div ref={pinInputRef} className="w-full mb-4 sm:mb-5 2xl:mb-4 space-y-3">
-                <input type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)}
-                  className="w-full bg-[#F4F2F0] border border-[#1F221D]/12 rounded-xl px-4 py-3 text-sm text-[#1F221D] outline-none focus:border-[#FF7A10]/50 focus:bg-white transition-all"
-                  placeholder="Admin email" />
-                <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)}
-                  className="w-full bg-[#F4F2F0] border border-[#1F221D]/12 rounded-xl px-4 py-3 text-sm text-[#1F221D] outline-none focus:border-[#FF7A10]/50 focus:bg-white transition-all"
-                  placeholder="Password" />
-              </div>
-            ) : (
-              <>
-                <div ref={pinInputRef} className="flex flex-col items-center mb-4 sm:mb-5 2xl:mb-4">
-                  <p className="text-[10px] text-[#555754] mb-3">Please input your PIN to validate yourself.</p>
-                  <div className="flex items-center gap-6">
-                    {[...Array(4)].map((_, i) => (
-                      <div key={i} className={styles.pinSquare}>
-                        <div className={`${styles.pinDot} ${i < pin.length ? styles.pinDotActive : ''}`} />
-                      </div>
-                    ))}
+              <div className="space-y-3.5">
+                <div>
+                  <label className="text-xs font-bold text-[#666A64] uppercase tracking-wider mb-1 block">
+                    Admin Email
+                  </label>
+                  <div className="relative flex items-center">
+                    <Mail className="w-4 h-4 absolute left-3.5 text-[#666A64]" />
+                    <input
+                      type="email"
+                      value={adminEmail}
+                      onChange={(e) => setAdminEmail(e.target.value)}
+                      required
+                      placeholder="admin@restopos.com"
+                      className="w-full bg-[#F7F5F2] border border-[#E9E5E1] rounded-xl pl-10 pr-4 py-3 text-xs text-[#1F221D] outline-none focus:border-[#FF7A10] focus:bg-white transition-all"
+                    />
                   </div>
                 </div>
-                <div className={`w-full max-w-[220px] sm:max-w-[250px] 2xl:max-w-[220px] ${styles.keypadGrid} mb-4 sm:mb-5`}>
-                  {['1','2','3','4','5','6','7','8','9'].map((num) => (
-                    <button key={num} type="button" onClick={() => handleKeyPress(num)} className={styles.keypadButton}>{num}</button>
+
+                <div>
+                  <label className="text-xs font-bold text-[#666A64] uppercase tracking-wider mb-1 block">
+                    Password
+                  </label>
+                  <div className="relative flex items-center">
+                    <Lock className="w-4 h-4 absolute left-3.5 text-[#666A64]" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      required
+                      placeholder="••••••••"
+                      className="w-full bg-[#F7F5F2] border border-[#E9E5E1] rounded-xl pl-10 pr-10 py-3 text-xs text-[#1F221D] outline-none focus:border-[#FF7A10] focus:bg-white transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3.5 text-[#666A64] hover:text-[#1F221D]"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center py-2">
+                {/* PIN Display Dots */}
+                <div className="flex items-center gap-4 mb-5">
+                  {[0, 1, 2, 3].map((idx) => (
+                    <div
+                      key={idx}
+                      className={`w-11 h-12 rounded-xl border-2 flex items-center justify-center transition-all ${
+                        idx < pin.length
+                          ? 'border-[#FF7A10] bg-[#FFF2E8]'
+                          : 'border-[#E9E5E1] bg-[#F7F5F2]'
+                      }`}
+                    >
+                      <span
+                        className={`w-3.5 h-3.5 rounded-full ${
+                          idx < pin.length ? 'bg-[#FF7A10]' : 'bg-[#E9E5E1]'
+                        }`}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Keypad */}
+                <div className="grid grid-cols-3 gap-2.5 w-full max-w-[240px]">
+                  {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => handleKeyPress(num)}
+                      className="h-11 rounded-xl bg-[#F7F5F2] hover:bg-[#E9E5E1] border border-[#E9E5E1] text-base font-extrabold text-[#1F221D] transition-all active:scale-95 cursor-pointer"
+                    >
+                      {num}
+                    </button>
                   ))}
                   <div />
-                  <button type="button" onClick={() => handleKeyPress('0')} className={styles.keypadButton}>0</button>
-                  <button type="button" onClick={handleBackspace} className={styles.keypadButton}><Delete className="w-4 h-4 opacity-70" /></button>
+                  <button
+                    type="button"
+                    onClick={() => handleKeyPress('0')}
+                    className="h-11 rounded-xl bg-[#F7F5F2] hover:bg-[#E9E5E1] border border-[#E9E5E1] text-base font-extrabold text-[#1F221D] transition-all active:scale-95 cursor-pointer"
+                  >
+                    0
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBackspace}
+                    className="h-11 rounded-xl bg-[#F7F5F2] hover:bg-[#C62828]/10 border border-[#E9E5E1] hover:border-[#C62828]/30 text-[#C62828] flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+                  >
+                    <Delete className="w-4 h-4" />
+                  </button>
                 </div>
-              </>
+              </div>
             )}
 
-            <button ref={btnRef} type="submit" disabled={isLoggingIn}
-              onMouseEnter={handleBtnMouseEnter} onMouseLeave={handleBtnMouseLeave}
-              className="w-full py-3 sm:py-3.5 2xl:py-3 text-sm sm:text-[15px] 2xl:text-sm bg-[#FF7A10] text-white font-semibold rounded-full hover:bg-[#E86000] active:scale-[0.98] transition-all">
-              {isLoggingIn ? 'Signing In...' : 'Start Shift'}
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoggingIn}
+              className="w-full py-3.5 bg-[#FF7A10] hover:bg-[#E86000] text-white font-extrabold text-sm rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
+            >
+              <span>{isLoggingIn ? 'Authenticating…' : selectedRole === 'admin' ? 'Sign In as Admin' : 'Clock-In Shift'}</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </form>
+
+          {/* Quick Demo Fill Buttons */}
+          <div className="w-full mt-6 pt-4 border-t border-[#E9E5E1] flex flex-col gap-2">
+            <span className="text-[10px] font-extrabold text-[#666A64] uppercase tracking-wider text-center">
+              Fast Demo Testing
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={fillDemoAdmin}
+                className="flex-1 py-2 px-3 rounded-xl bg-[#F7F5F2] hover:bg-[#FFF2E8] border border-[#E9E5E1] hover:border-[#FF7A10]/30 text-[11px] font-bold text-[#1F221D] transition-all cursor-pointer"
+              >
+                ⚡ Fill Demo Admin
+              </button>
+              <button
+                type="button"
+                onClick={fillDemoEmployee}
+                className="flex-1 py-2 px-3 rounded-xl bg-[#F7F5F2] hover:bg-[#FFF2E8] border border-[#E9E5E1] hover:border-[#FF7A10]/30 text-[11px] font-bold text-[#1F221D] transition-all cursor-pointer"
+              >
+                🔑 Fill Demo PIN (1234)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Powered By Branding */}
+        <div className="mt-8 flex items-center justify-center gap-1.5 text-xs text-[#666A64] font-medium">
+          <span>Powered by</span>
+          <span className="font-extrabold text-[#FF7A10] tracking-wide text-sm">Pixorasofttech</span>
         </div>
       </div>
     </div>

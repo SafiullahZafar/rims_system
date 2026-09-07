@@ -7,6 +7,8 @@ import {
   ChevronRight,
   LogOut,
   UtensilsCrossed,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 import { clsx } from 'clsx';
@@ -46,20 +48,41 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
         )
       )}
     >
-      {/* Brand Header */}
-      <div className="px-4 py-4.5 flex items-center gap-3 border-b border-[#E9E5E1] flex-shrink-0 bg-white">
-        <div className="w-9 h-9 rounded-xl bg-[#FF7A10] flex items-center justify-center flex-shrink-0 shadow-sm">
-          <UtensilsCrossed className="w-5 h-5 text-white" />
-        </div>
-        {!collapsed && (
-          <div className="flex flex-col min-w-0">
-            <span className="font-black text-lg text-[#1F221D] tracking-tight whitespace-nowrap">
-              Resto<span className="text-[#FF7A10]">POS</span>
-            </span>
-            <span className="text-[10px] font-bold text-[#666A64] tracking-wider uppercase -mt-1">
-              RIMS Enterprise
-            </span>
-          </div>
+      {/* Brand Header with Hover Stretch / Compress Toggle */}
+      <div className={twMerge(clsx('py-4 flex items-center border-b border-[#E9E5E1] flex-shrink-0 bg-white', { 'px-4 justify-between': !collapsed, 'px-3 justify-center': collapsed }))}>
+        {collapsed ? (
+          <button
+            onClick={onToggle}
+            className="w-10 h-10 rounded-2xl bg-[#FF7A10] hover:bg-[#E86000] text-white flex items-center justify-center flex-shrink-0 shadow-xs transition-all duration-200 cursor-pointer group relative"
+            title="Expand Sidebar (Stretch)"
+          >
+            <UtensilsCrossed className="w-5 h-5 text-white group-hover:hidden transition-all" />
+            <PanelLeftOpen className="w-5 h-5 text-white hidden group-hover:block transition-all" />
+          </button>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 min-w-0 cursor-pointer" onClick={() => navigate('/dashboard')}>
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#FF7A10] to-[#E86000] flex items-center justify-center flex-shrink-0 shadow-xs relative">
+                <UtensilsCrossed className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="font-black text-lg text-[#1F221D] tracking-tight whitespace-nowrap">
+                  Pixora<span className="text-[#FF7A10]">RIMS</span>
+                </span>
+                <span className="text-[10px] font-extrabold text-[#666A64] tracking-wider uppercase -mt-1">
+                  Enterprise Suite
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={onToggle}
+              className="p-1.5 rounded-xl bg-[#F7F5F2] border border-[#E9E5E1] text-[#666A64] hover:text-[#FF7A10] hover:bg-[#FFF2E8] hover:border-[#FF7A10]/30 transition-all cursor-pointer flex-shrink-0"
+              title="Collapse Sidebar (Compress)"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          </>
         )}
       </div>
 

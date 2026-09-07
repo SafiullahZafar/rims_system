@@ -15,17 +15,17 @@ export const BusinessSettingsScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'profile' | 'pos' | 'notifications'>('profile');
 
   // Form State
-  const [restoName, setRestoName] = useState('RestoPOS Gourmet Bistro');
+  const [restoName, setRestoName] = useState('Pixora Gourmet Bistro');
   const [logoUrl, setLogoUrl] = useState('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4');
   const [address, setAddress] = useState('124 Culinary Boulevard, Downtown Metro');
   const [phone, setPhone] = useState('+1 (555) 382-9100');
-  const [email, setEmail] = useState('contact@restopos-gourmet.com');
+  const [email, setEmail] = useState('contact@pixora-gourmet.com');
   const [currency, setCurrency] = useState('$');
   const [taxRate, setTaxRate] = useState('8.5');
 
   // POS Defaults
-  const [receiptHeader, setReceiptHeader] = useState('Thank you for dining with RestoPOS!');
-  const [receiptFooter, setReceiptFooter] = useState('Please visit us again. Feedback: info@restopos.com');
+  const [receiptHeader, setReceiptHeader] = useState('Thank you for dining with Pixora RIMS!');
+  const [receiptFooter, setReceiptFooter] = useState('Please visit us again. Feedback: info@pixora-gourmet.com');
   const [autoPrint, setAutoPrint] = useState(true);
   const [orderPrefix, setOrderPrefix] = useState('ORD-');
 

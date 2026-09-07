@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTime } from '../../hooks/useTime';
 import { useAppStore } from '../../store/useAppStore';
-import { Bell, Menu } from 'lucide-react';
+import { Bell, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 
 interface HeaderProps {
@@ -14,6 +14,7 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumb, onMenuClick }
   const time = useTime();
   const notifications = useAppStore((state) => state.notifications);
   const userName = useAppStore((state) => state.userName);
+  const sidebarCollapsed = useAppStore((state) => state.sidebarCollapsed);
 
   const formatTime = (d: Date) =>
     d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -22,13 +23,14 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumb, onMenuClick }
     d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   return (
-    <header className="bg-white border-b border-[#E9E5E1] px-5 py-3 flex items-center justify-between select-none flex-shrink-0">
-      {/* Left: menu toggle + title */}
-      <div className="flex items-center gap-3">
+    <header className="bg-white border-b border-[#E9E5E1] px-6 py-3.5 flex items-center justify-between select-none flex-shrink-0">
+      {/* Left: mobile menu toggle + title */}
+      <div className="flex items-center gap-3.5">
         {onMenuClick && (
           <button
             onClick={onMenuClick}
             className="md:hidden p-2 rounded-xl bg-[#F7F5F2] border border-[#E9E5E1] text-[#666A64] hover:text-[#1F221D] cursor-pointer transition-colors"
+            title="Toggle Menu"
           >
             <Menu className="w-5 h-5" />
           </button>

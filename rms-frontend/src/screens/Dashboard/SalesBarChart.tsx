@@ -139,7 +139,7 @@ export const SalesBarChart: React.FC = () => {
               tickFormatter={(val) => `$${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: '#FFF2E8', opacity: 0.6 }} />
-            <Bar dataKey="revenue" radius={[6, 6, 0, 0]}>
+            <Bar dataKey="revenue" radius={[6, 6, 0, 0]} barSize={26}>
               {chartData.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}

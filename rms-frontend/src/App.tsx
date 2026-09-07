@@ -61,7 +61,7 @@ export const App: React.FC = () => {
     (r) => r.path === location.pathname || (r.path === '/employees' && location.pathname.startsWith('/employees/'))
   );
 
-  const title = currentRouteConfig?.title || 'RestoPOS RIMS';
+  const title = currentRouteConfig?.title || 'Pixora RIMS Enterprise';
   const breadcrumb = currentRouteConfig?.breadcrumb || 'Home';
 
   return (

@@ -3,6 +3,7 @@ import { PageWrapper } from '../../components/layout/PageWrapper';
 import { StatsCard } from './StatsCard';
 import { SalesBarChart } from './SalesBarChart';
 import { PerformanceTrendChart } from './PerformanceTrendChart';
+import { EmployeePerformanceChart } from './EmployeePerformanceChart';
 import { RightInsightPanel } from './RightInsightPanel';
 import { RecentOrders } from './RecentOrders';
 import {
@@ -67,30 +68,35 @@ export const DashboardScreen: React.FC = () => {
           />
         </div>
 
-        {/* Main Section: Left Charts Column + Right Insights Column */}
+        {/* Middle Section: Recent Sales & Live Table Status (Span 2) + Right Insights Column (Span 1) */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
-          {/* Main Charts Area (Span 2 Columns) */}
-          <div className="xl:col-span-2 flex flex-col gap-6">
-            {/* Middle Bar Chart */}
-            <div className="h-[320px]">
-              <SalesBarChart />
-            </div>
-
-            {/* Lower Performance Trend Area/Line Chart */}
-            <div className="h-[280px]">
-              <PerformanceTrendChart />
-            </div>
+          {/* Middle Left: Recent Sales & Live Table Overview */}
+          <div className="xl:col-span-2">
+            <RecentOrders />
           </div>
 
-          {/* Right Insights Column (Span 1 Column) */}
+          {/* Middle Right: Right Insights Column (Top Performers & Quick Actions) */}
           <div className="xl:col-span-1">
             <RightInsightPanel />
           </div>
         </div>
 
-        {/* Lower Recent Orders Section */}
-        <div className="mt-2">
-          <RecentOrders />
+        {/* Bottom Section: Analytics Graphs & Charts */}
+        <div className="flex flex-col gap-6 mt-2">
+          {/* Row 1: Sales Bar Report Chart & Performance Trend Chart */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="h-[340px]">
+              <SalesBarChart />
+            </div>
+            <div className="h-[340px]">
+              <PerformanceTrendChart />
+            </div>
+          </div>
+
+          {/* Row 2: Employee Performance & Geofencing Verification Line Chart */}
+          <div className="h-[320px]">
+            <EmployeePerformanceChart />
+          </div>
         </div>
       </div>
     </PageWrapper>

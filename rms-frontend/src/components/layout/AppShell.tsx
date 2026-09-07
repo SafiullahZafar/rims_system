@@ -16,15 +16,15 @@ export const AppShell: React.FC<AppShellProps> = ({ children, headerTitle, heade
   const toggleSidebar = useAppStore((state) => state.toggleSidebar);
 
   return (
-    <div className="w-full h-screen flex bg-[#F7F5F2] text-[#1F221D] font-sans overflow-hidden select-none p-3 sm:p-4 gap-3 sm:gap-4">
-      {/* Detached Floating Sidebar Shell (Desktop & Tablet) */}
-      <div className="hidden md:block flex-shrink-0 h-full">
+    <div className="w-full h-screen flex bg-white text-[#1F221D] font-sans overflow-hidden select-none relative">
+      {/* Floating Sidebar Container (Desktop & Tablet) */}
+      <div className="hidden md:block flex-shrink-0 h-full p-3 z-30">
         <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
       </div>
 
-      {/* Main Workspace Outer Container */}
-      <div className="flex-1 flex flex-col min-w-0 h-full bg-white rounded-2xl md:rounded-3xl border border-[#E9E5E1] shadow-[0_4px_20px_rgba(31,34,29,0.04)] overflow-hidden relative">
-        {/* Workspace Top Header */}
+      {/* Full Page Main Workspace Container */}
+      <div className="flex-1 flex flex-col min-w-0 h-full bg-white overflow-hidden relative">
+        {/* Workspace Top Header (Full Page Header) */}
         <Header title={headerTitle} breadcrumb={headerBreadcrumb} onMenuClick={toggleSidebar} />
 
         {/* Dynamic Screen View Content */}
