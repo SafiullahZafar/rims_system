@@ -4,7 +4,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToast } from '../../hooks/useToast';
 import {
-  UtensilsCrossed,
+  Command,
   ShieldCheck,
   UserCheck,
   MapPin,
@@ -16,6 +16,8 @@ import {
   CheckCircle2,
   ArrowRight,
   Delete,
+  Zap,
+  KeyRound,
 } from 'lucide-react';
 import { gsap } from 'gsap';
 
@@ -78,7 +80,7 @@ export const LoginScreen: React.FC = () => {
   // Quick 1-click Demo Fill
   const fillDemoAdmin = () => {
     setSelectedRole('admin');
-    setAdminEmail('admin@restopos.com');
+    setAdminEmail('admin@aurapos.com');
     setAdminPassword('admin123');
     toast.info('Loaded Demo Admin credentials.');
   };
@@ -106,28 +108,28 @@ export const LoginScreen: React.FC = () => {
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#FF7A10] to-[#E86000] text-white flex items-center justify-center shadow-lg border border-white/20">
-              <UtensilsCrossed className="w-6 h-6" />
+              <Command className="w-6 h-6" />
             </div>
             <div>
               <span className="font-black text-2xl text-white tracking-tight">
-                Pixora<span className="text-[#FF7A10]">RIMS</span>
+                Aura<span className="text-[#FF7A10]">POS</span>
               </span>
               <span className="block text-[10px] font-bold text-white/70 uppercase tracking-widest -mt-1">
-                Enterprise Restaurant System
+                Hospitality Enterprise Suite
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-xs text-white font-semibold">
             <span className="w-2 h-2 rounded-full bg-[#2E7D32] animate-pulse" />
-            System Online • v2.4
+            System Active • v3.0
           </div>
         </div>
 
         {/* Center Hero Copy & Highlights */}
         <div className="relative z-10 max-w-xl space-y-6 my-auto">
           <div className="inline-flex items-center gap-2 bg-[#FF7A10]/20 border border-[#FF7A10]/40 text-[#FF7A10] px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider">
-            <Sparkles className="w-4 h-4" /> Next-Gen Enterprise POS
+            <Sparkles className="w-4 h-4" /> Next-Gen Hospitality POS
           </div>
 
           <h1 className="text-4xl xl:text-5xl font-black text-white leading-tight tracking-tight">
@@ -160,7 +162,7 @@ export const LoginScreen: React.FC = () => {
 
         {/* Hero Footer Branding */}
         <div className="relative z-10 flex items-center justify-between border-t border-white/15 pt-4 text-xs text-white/70">
-          <span>Pixora RIMS Enterprise Suite</span>
+          <span>AuraPOS Hospitality Enterprise Suite</span>
           <div className="flex items-center gap-1.5 font-medium">
             <span>Powered by</span>
             <span className="font-extrabold text-[#FF7A10] tracking-wide text-sm">Pixorasofttech</span>
@@ -173,14 +175,14 @@ export const LoginScreen: React.FC = () => {
         {/* Mobile Header Logo */}
         <div className="lg:hidden flex items-center gap-2.5 mb-6">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#FF7A10] to-[#E86000] text-white flex items-center justify-center">
-            <UtensilsCrossed className="w-5 h-5" />
+            <Command className="w-5 h-5" />
           </div>
           <div>
             <span className="font-black text-xl text-[#1F221D]">
-              Pixora<span className="text-[#FF7A10]">RIMS</span>
+              Aura<span className="text-[#FF7A10]">POS</span>
             </span>
             <span className="block text-[9px] font-bold text-[#666A64] uppercase tracking-wider">
-              Enterprise Suite
+              Hospitality Suite
             </span>
           </div>
         </div>
@@ -246,7 +248,7 @@ export const LoginScreen: React.FC = () => {
                       value={adminEmail}
                       onChange={(e) => setAdminEmail(e.target.value)}
                       required
-                      placeholder="admin@restopos.com"
+                      placeholder="admin@aurapos.com"
                       className="w-full bg-[#F7F5F2] border border-[#E9E5E1] rounded-xl pl-10 pr-4 py-3 text-xs text-[#1F221D] outline-none focus:border-[#FF7A10] focus:bg-white transition-all"
                     />
                   </div>
@@ -340,7 +342,7 @@ export const LoginScreen: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Demo Fill Buttons */}
+          {/* Quick Demo Fill Buttons (Lucide SVG Icons) */}
           <div className="w-full mt-6 pt-4 border-t border-[#E9E5E1] flex flex-col gap-2">
             <span className="text-[10px] font-extrabold text-[#666A64] uppercase tracking-wider text-center">
               Fast Demo Testing
@@ -349,16 +351,16 @@ export const LoginScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={fillDemoAdmin}
-                className="flex-1 py-2 px-3 rounded-xl bg-[#F7F5F2] hover:bg-[#FFF2E8] border border-[#E9E5E1] hover:border-[#FF7A10]/30 text-[11px] font-bold text-[#1F221D] transition-all cursor-pointer"
+                className="flex-1 py-2 px-3 rounded-xl bg-[#F7F5F2] hover:bg-[#FFF2E8] border border-[#E9E5E1] hover:border-[#FF7A10]/30 text-[11px] font-bold text-[#1F221D] transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                ⚡ Fill Demo Admin
+                <Zap className="w-3.5 h-3.5 text-[#FF7A10]" /> Fill Demo Admin
               </button>
               <button
                 type="button"
                 onClick={fillDemoEmployee}
-                className="flex-1 py-2 px-3 rounded-xl bg-[#F7F5F2] hover:bg-[#FFF2E8] border border-[#E9E5E1] hover:border-[#FF7A10]/30 text-[11px] font-bold text-[#1F221D] transition-all cursor-pointer"
+                className="flex-1 py-2 px-3 rounded-xl bg-[#F7F5F2] hover:bg-[#FFF2E8] border border-[#E9E5E1] hover:border-[#FF7A10]/30 text-[11px] font-bold text-[#1F221D] transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                🔑 Fill Demo PIN (1234)
+                <KeyRound className="w-3.5 h-3.5 text-[#FF7A10]" /> Fill Demo PIN (1234)
               </button>
             </div>
           </div>

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../../store/useOrderStore';
 import { useTableStore } from '../../store/useTableStore';
@@ -6,7 +6,7 @@ import { PageWrapper } from '../../components/layout/PageWrapper';
 import { CartItem, MenuItem } from '../../types';
 import {
   ArrowLeft, Search, Plus, Minus, FileText,
-  AlertCircle, Sparkles, X,
+  AlertCircle, Sparkles, X, UtensilsCrossed,
 } from 'lucide-react';
 
 // ── Cart Panel ────────────────────────────────────────────────
