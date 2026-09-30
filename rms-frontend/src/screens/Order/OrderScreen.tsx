@@ -6,7 +6,7 @@ import { PageWrapper } from '../../components/layout/PageWrapper';
 import { CartItem, MenuItem } from '../../types';
 import {
   ArrowLeft, Search, Plus, Minus, FileText,
-  AlertCircle, Sparkles, X, UtensilsCrossed,
+  AlertCircle, Sparkles, X,
 } from 'lucide-react';
 
 // ── Cart Panel ────────────────────────────────────────────────

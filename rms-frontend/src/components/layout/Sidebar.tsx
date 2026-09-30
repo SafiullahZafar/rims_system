@@ -3,10 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
 import { useKitchenStore } from '../../store/useKitchenStore';
 import {
-  ChevronLeft,
-  ChevronRight,
   LogOut,
-  UtensilsCrossed,
   PanelLeftClose,
   PanelLeftOpen,
   Command,

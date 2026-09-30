@@ -8,6 +8,7 @@ return [
         'http://localhost:5177',
         'http://127.0.0.1:5173',
         'http://127.0.0.1:5177',
+        'https://rms.pixorasofttech.com',
     ],
     'allowed_origins_patterns' => [
         '#^http://localhost:517\d$#',
