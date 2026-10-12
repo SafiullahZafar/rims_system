@@ -75,7 +75,7 @@ const TableModal: React.FC<TableModalProps> = ({ table, displayStatus, onClose }
       <div className="bg-white border border-[#1F221D]/10 rounded-3xl p-6 w-full max-w-sm shadow-card relative overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="text-lg font-semibold text-[#1F221D] tracking-tight">Table {table.id}</h3>
+            <h3 className="text-lg font-semibold text-[#1F221D] tracking-tight">Table {table.number ?? table.id}</h3>
             <p className="text-xs text-[#555754] mt-0.5 font-medium">Section {table.section} • {table.seats} seats</p>
           </div>
           <div className="flex items-center gap-2">
@@ -275,7 +275,7 @@ export const TablesScreen: React.FC = () => {
                   </span>
                 </div>
                 <div className="my-auto flex flex-col items-center justify-center">
-                  <span className={`text-4xl font-semibold tracking-tight transition-transform duration-300 group-hover:scale-110 ${cfg.numberColor}`}>{table.id}</span>
+                  <span className={`text-4xl font-semibold tracking-tight transition-transform duration-300 group-hover:scale-110 ${cfg.numberColor}`}>{table.number ?? table.id}</span>
                   <span className="flex items-center gap-1 text-[10px] text-[#555754] font-medium mt-1 uppercase tracking-wider">
                     <Users className="w-2.5 h-2.5" /> {table.seats} Pax
                   </span>

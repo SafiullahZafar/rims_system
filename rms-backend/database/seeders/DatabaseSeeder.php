@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\KitchenOrder;
+use App\Models\KitchenOrderItem;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -23,7 +24,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $demoBusinessId = DB::table('businesses')->where('is_demo', true)->value('id');
+        $demoBusinessId = DB::table('businesses')
+            ->where('slug', 'rims-shared-demo')
+            ->where('is_demo', true)
+            ->value('id');
         if (! $demoBusinessId) {
             throw new \RuntimeException('The demo business is missing. Run the business tenancy migration first.');
         }
@@ -184,8 +188,97 @@ class DatabaseSeeder extends Seeder
                 if ($order['restaurant_table_id'] !== null) {
                     $order['restaurant_table_id'] = $tableIds[$order['restaurant_table_id']];
                 }
-                Order::query()->create($order + ['business_id' => $demoBusinessId]);
+                $existing = Order::query()->create($order + ['business_id' => $demoBusinessId]);
+                $existing->created_at = $order['paid_at'];
+                $existing->save();
             }
+
+            if (! OrderItem::query()->withoutGlobalScopes()->where('business_id', $demoBusinessId)->where('order_id', $existing->id)->exists()) {
+                $menuItem = MenuItem::query()->withoutGlobalScopes()->where('business_id', $demoBusinessId)->orderBy('id')->first();
+                if ($menuItem) {
+                    OrderItem::query()->create([
+                        'business_id' => $demoBusinessId,
+                        'order_id' => $existing->id,
+                        'menu_item_id' => $menuItem->id,
+                        'name' => $menuItem->name,
+                        'quantity' => 1,
+                        'unit_price' => $menuItem->price,
+                        'line_total' => $menuItem->price,
+                    ]);
+                }
+            }
+        }
+
+        // Four active demo orders make the full kitchen workflow usable on every fresh demo.
+        $menuByName = MenuItem::query()->withoutGlobalScopes()->where('business_id', $demoBusinessId)->get()->keyBy('name');
+        $activeOrders = [
+            ['code' => 'O-2101', 'table_number' => 2, 'kitchen_status' => 'new', 'duration' => 8, 'items' => [['Grilled Burger', 2], ['Crispy French Fries', 1]]],
+            ['code' => 'O-2102', 'table_number' => 3, 'kitchen_status' => 'cooking', 'duration' => 12, 'items' => [['Southwest Scramble Bowl', 1], ['Belgian Waffle', 1]]],
+            ['code' => 'O-2103', 'table_number' => 7, 'kitchen_status' => 'ready', 'duration' => 20, 'items' => [['Margherita Pizza', 1], ['BBQ Chicken Wings', 1]]],
+            ['code' => 'O-2104', 'table_number' => 11, 'kitchen_status' => 'new', 'duration' => 18, 'items' => [['Grilled Salmon', 1]]],
+        ];
+
+        foreach ($activeOrders as $active) {
+            $lines = [];
+            foreach ($active['items'] as [$name, $quantity]) {
+                $menuItem = $menuByName->get($name);
+                if ($menuItem) $lines[] = [$menuItem, $quantity];
+            }
+            if ($lines === []) continue;
+
+            $subtotal = collect($lines)->sum(fn ($line) => (float) $line[0]->price * $line[1]);
+            $tax = round($subtotal * 0.1, 2);
+            $tableId = $tableIds[$active['table_number']];
+            $order = Order::query()->withoutGlobalScopes()->updateOrCreate(
+                ['business_id' => $demoBusinessId, 'code' => $active['code']],
+                [
+                    'restaurant_table_id' => $tableId,
+                    'order_type' => 'dine-in',
+                    'status' => 'in-progress',
+                    'subtotal' => $subtotal,
+                    'tax' => $tax,
+                    'total' => $subtotal + $tax,
+                    'paid_at' => null,
+                ]
+            );
+            OrderItem::query()->withoutGlobalScopes()->where('business_id', $demoBusinessId)->where('order_id', $order->id)->delete();
+            foreach ($lines as [$menuItem, $quantity]) {
+                OrderItem::query()->create([
+                    'business_id' => $demoBusinessId,
+                    'order_id' => $order->id,
+                    'menu_item_id' => $menuItem->id,
+                    'name' => $menuItem->name,
+                    'quantity' => $quantity,
+                    'unit_price' => $menuItem->price,
+                    'line_total' => (float) $menuItem->price * $quantity,
+                ]);
+            }
+
+            $kitchenOrder = KitchenOrder::query()->withoutGlobalScopes()->updateOrCreate(
+                ['business_id' => $demoBusinessId, 'code' => 'K-'.$active['code']],
+                [
+                    'order_id' => $order->id,
+                    'restaurant_table_id' => $tableId,
+                    'status' => $active['kitchen_status'],
+                    'estimated_minutes' => $active['duration'],
+                ]
+            );
+            KitchenOrderItem::query()->withoutGlobalScopes()->where('business_id', $demoBusinessId)->where('kitchen_order_id', $kitchenOrder->id)->delete();
+            foreach ($lines as [$menuItem, $quantity]) {
+                KitchenOrderItem::query()->create([
+                    'business_id' => $demoBusinessId,
+                    'kitchen_order_id' => $kitchenOrder->id,
+                    'name' => $menuItem->name,
+                    'quantity' => $quantity,
+                ]);
+            }
+
+            RestaurantTable::query()->withoutGlobalScopes()->where('business_id', $demoBusinessId)->whereKey($tableId)->update([
+                'status' => 'occupied',
+                'current_order_code' => $order->code,
+                'amount' => $order->total,
+                'duration' => $active['duration'],
+            ]);
         }
 
         // ── 7. Expenses (20 records across categories) ───────────────────────────

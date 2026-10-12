@@ -57,6 +57,7 @@ interface BackendMenuItem {
 
 interface BackendTable {
   id: number;
+  table_number?: number | null;
   seats: number;
   section: string;
   status: TableStatus;
@@ -144,6 +145,7 @@ export const mapMenuItem = (item: BackendMenuItem): MenuItem => ({
 
 export const mapTable = (table: BackendTable): Table => ({
   id: table.id,
+  number: table.table_number ?? undefined,
   seats: table.seats,
   section: table.section,
   status: table.status,

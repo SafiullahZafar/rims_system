@@ -25,7 +25,7 @@ export const PaymentScreen: React.FC = () => {
   const updateTableStatus = useTableStore((s) => s.updateTableStatus);
   const tables = useTableStore((s) => s.tables) || [];
   const tableData = tables.find((t) => t.id === tableId);
-  const tableDisplayCode = tableData ? `${tableData.section}${tableData.id}` : '—';
+  const tableDisplayCode = tableData ? `${tableData.section}${tableData.number ?? tableData.id}` : '—';
 
   const total = tableData?.amount ?? 0;
   const tax = Number((total / 1.1 * 0.1).toFixed(2));

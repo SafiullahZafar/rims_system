@@ -161,7 +161,7 @@ export const OrderScreen: React.FC = () => {
   const navigate = useNavigate();
   const updateTableStatus = useTableStore((s) => s.updateTableStatus);
   const tableData = useTableStore((s) => s.tables.find((t) => t.id === tableId));
-  const tableDisplayCode = tableData ? `${tableData.section}${tableData.id}` : '—';
+  const tableDisplayCode = tableData ? `${tableData.section}${tableData.number ?? tableData.id}` : '—';
 
   const handleProceed = async () => {
     if (cartItems.length === 0 || tableId === null) return;

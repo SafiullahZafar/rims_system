@@ -2,10 +2,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusCircle, Grid, ChefHat, CalendarDays, MapPin } from 'lucide-react';
 import { useOrderStore } from '../../store/useOrderStore';
+import { useTableStore } from '../../store/useTableStore';
 
 export const RightInsightPanel: React.FC = () => {
   const navigate = useNavigate();
   const orders = useOrderStore((state) => state.orders);
+  const tables = useTableStore((state) => state.tables);
 
   const quickActions = [
     { label: 'New Order', icon: PlusCircle, path: '/order', accent: '#FF7A10', primary: true },
@@ -49,10 +51,10 @@ export const RightInsightPanel: React.FC = () => {
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-[#FF7A10]/15 flex items-center justify-center text-[#FF7A10] font-bold text-xs">
-                  {order.tableId ? `T${order.tableId}` : 'OR'}
+                  {order.tableId ? `T${tables.find((table) => table.id === order.tableId)?.number ?? order.tableId}` : 'OR'}
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-[#1F221D]">{order.tableId ? `Table ${order.tableId}` : 'Restaurant order'}</p>
+                  <p className="text-xs font-bold text-[#1F221D]">{order.tableId ? `Table ${tables.find((table) => table.id === order.tableId)?.number ?? order.tableId}` : 'Restaurant order'}</p>
                   <p className="text-[10px] text-[#666A64]">Order #{order.id}</p>
                 </div>
               </div>

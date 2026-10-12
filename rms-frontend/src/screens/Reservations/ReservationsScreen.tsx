@@ -71,7 +71,7 @@ const ReservationForm: React.FC<ReservationFormProps> = ({ availableTables, onSu
         section: selectedTable.section,
       });
       await fetchTables();
-      addNotification(`Table ${selectedTable.id} reserved for ${selectedCustomer.name} at ${timeSlot.trim()}.`, 'success');
+      addNotification(`Table ${selectedTable.number ?? selectedTable.id} reserved for ${selectedCustomer.name} at ${timeSlot.trim()}.`, 'success');
       setTableId('');
       setCustomerId('');
       setTimeSlot('');
@@ -103,7 +103,7 @@ const ReservationForm: React.FC<ReservationFormProps> = ({ availableTables, onSu
             <option value="">— Choose a table —</option>
             {availableTables.map((t) => (
               <option key={t.id} value={t.id}>
-                Table {t.id} · Zone {t.section} · {t.seats} seats
+                Table {t.number ?? t.id} · Zone {t.section} · {t.seats} seats
               </option>
             ))}
           </select>
@@ -220,10 +220,10 @@ const ReservationCard: React.FC<ReservationCardProps> = ({ table, onCancel, isCa
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 border border-[#1565C0]/20 flex items-center justify-center">
-          <span className="text-lg font-semibold text-[#1565C0] leading-none">{table.id}</span>
+          <span className="text-lg font-semibold text-[#1565C0] leading-none">{table.number ?? table.id}</span>
         </div>
         <div>
-          <p className="text-sm font-semibold text-[#1F221D] leading-tight">Table {table.id}</p>
+          <p className="text-sm font-semibold text-[#1F221D] leading-tight">Table {table.number ?? table.id}</p>
           <p className="text-[11px] text-[#555754] font-medium mt-0.5">Zone {table.section} · {table.seats} seats</p>
         </div>
       </div>
@@ -303,7 +303,7 @@ export const ReservationsScreen: React.FC = () => {
         section: table.section,
       });
       await fetchTables();
-      addNotification(`Reservation for Table ${table.id} cancelled.`, 'info');
+      addNotification(`Reservation for Table ${table.number ?? table.id} cancelled.`, 'info');
     } catch (err) {
       addNotification(err instanceof Error ? err.message : 'Failed to cancel reservation.', 'error');
     } finally {

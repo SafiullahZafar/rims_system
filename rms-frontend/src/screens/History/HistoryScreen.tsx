@@ -8,6 +8,7 @@ import { PageWrapper } from '../../components/layout/PageWrapper';
 import { useAppStore } from '../../store/useAppStore';
 import { api } from '../../services/api';
 import { RecentOrder, Customer } from '../../types';
+import { useTableStore } from '../../store/useTableStore';
 
 // ─── Shared utils ─────────────────────────────────────────────────────────────
 
@@ -46,6 +47,7 @@ const statusBadge = (status: string) => {
 
 const OrderHistoryTab: React.FC = () => {
   const addNotification = useAppStore((s) => s.addNotification);
+  const tables = useTableStore((s) => s.tables);
   const [orders, setOrders] = useState<RecentOrder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [from, setFrom] = useState(defaultFrom);
@@ -150,7 +152,7 @@ const OrderHistoryTab: React.FC = () => {
                       <span className="font-mono text-xs font-semibold text-[#1F221D]">{order.id}</span>
                     </td>
                     <td className="px-4 py-3 text-xs text-[#555754] hidden sm:table-cell">
-                      {order.tableId ? `Table #${order.tableId}` : '—'}
+                      {order.tableId ? `Table #${tables.find((table) => table.id === order.tableId)?.number ?? order.tableId}` : '—'}
                     </td>
                     <td className="px-4 py-3 text-xs text-[#555754] hidden md:table-cell">{order.items}</td>
                     <td className="px-4 py-3">

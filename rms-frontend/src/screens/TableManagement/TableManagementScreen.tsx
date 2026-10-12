@@ -226,7 +226,7 @@ const ZoneGroup: React.FC<ZoneGroupProps> = ({ section, tables, onDelete, deleti
                   className="bg-[#F4F2F0] border border-[#1F221D]/08 rounded-xl p-3 flex flex-col gap-2"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-base font-semibold text-[#1F221D]">#{table.id}</span>
+                    <span className="text-base font-semibold text-[#1F221D]">#{table.number ?? table.id}</span>
                     <button
                       onClick={() => isDeletable && onDelete(table)}
                       disabled={!isDeletable || deletingId === table.id}
@@ -285,7 +285,7 @@ export const TableManagementScreen: React.FC = () => {
     try {
       await api.deleteTable(table.id);
       await fetchTables();
-      addNotification(`Table #${table.id} deleted.`, 'info');
+      addNotification(`Table #${table.number ?? table.id} deleted.`, 'info');
     } catch (err) {
       addNotification(err instanceof Error ? err.message : 'Failed to delete table.', 'error');
     } finally {

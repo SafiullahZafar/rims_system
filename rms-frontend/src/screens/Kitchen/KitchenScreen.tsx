@@ -28,6 +28,7 @@ const ElapsedTimer: React.FC<{ createdAt: Date }> = ({ createdAt }) => {
 };
 
 const KitchenCard: React.FC<{ order: KitchenOrder }> = ({ order }) => {
+  const tableNumber = useTableStore((s) => s.tables.find((table) => table.id === order.tableId)?.number ?? order.tableId);
   const updateOrderStatus = useKitchenStore((s) => s.updateOrderStatus);
   const removeOrder = useKitchenStore((s) => s.removeOrder);
   const updateTableStatus = useTableStore((s) => s.updateTableStatus);
@@ -40,15 +41,15 @@ const KitchenCard: React.FC<{ order: KitchenOrder }> = ({ order }) => {
     try {
       if (order.status === 'new') {
         await updateOrderStatus(order.id, 'cooking');
-        addNotification(`Table ${order.tableId} — now cooking 🍳`, 'info');
+        addNotification(`Table ${tableNumber} — now cooking 🍳`, 'info');
       } else if (order.status === 'cooking') {
         await updateOrderStatus(order.id, 'ready');
-        addNotification(`Table ${order.tableId} — order READY! 🔔`, 'success');
+        addNotification(`Table ${tableNumber} — order READY! 🔔`, 'success');
       } else {
         // Mark served: remove kitchen order + update table status
         await removeOrder(order.id);
         await updateTableStatus(order.tableId, 'served');
-        addNotification(`Table ${order.tableId} — served ✅`, 'success');
+        addNotification(`Table ${tableNumber} — served ✅`, 'success');
       }
     } catch (error) {
       addNotification(error instanceof Error ? error.message : 'Could not update this kitchen order.', 'error');
@@ -68,7 +69,7 @@ const KitchenCard: React.FC<{ order: KitchenOrder }> = ({ order }) => {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[10px] font-medium text-[#555754] tracking-widest">#{order.id}</p>
-          <p className="text-base font-semibold text-[#1F221D]">Table {order.tableId}</p>
+          <p className="text-base font-semibold text-[#1F221D]">{order.tableId ? `Table ${tableNumber}` : 'Takeaway / delivery'}</p>
         </div>
         <div className="flex items-center gap-2">
           <ElapsedTimer createdAt={order.createdAt} />

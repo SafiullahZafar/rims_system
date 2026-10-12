@@ -60,7 +60,7 @@ export const RecentOrders: React.FC = () => {
                 return (
                   <tr key={idx} className="hover:bg-[#F7F5F2]/70 transition-colors">
                     <td className="py-3 px-3.5 font-bold text-[#1F221D] font-mono">{order.id}</td>
-                    <td className="py-3 px-3.5 text-[#666A64] font-semibold">Table {order.tableId}</td>
+                    <td className="py-3 px-3.5 text-[#666A64] font-semibold">{order.tableId ? `Table ${tables.find((table) => table.id === order.tableId)?.number ?? order.tableId}` : '—'}</td>
                     <td className="py-3 px-3.5 text-[#666A64]">{order.items} items</td>
                     <td className="py-3 px-3.5 text-[#666A64] font-medium">{order.time}</td>
                     <td className="py-3 px-3.5">
@@ -130,7 +130,7 @@ export const RecentOrders: React.FC = () => {
                   </div>
 
                   <div className="flex items-baseline justify-between">
-                    <span className="text-sm font-black text-[#1F221D]">Table {tbl.id}</span>
+                    <span className="text-sm font-black text-[#1F221D]">Table {tbl.number ?? tbl.id}</span>
                     <span className="text-[10px] font-bold text-[#666A64] flex items-center gap-1">
                       <Users className="w-3 h-3 text-[#666A64]" /> {tbl.seats} Seats
                     </span>
