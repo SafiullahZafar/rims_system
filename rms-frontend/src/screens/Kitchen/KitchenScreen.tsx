@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useKitchenStore } from '../../store/useKitchenStore';
 import { useTableStore } from '../../store/useTableStore';
 import { useAppStore } from '../../store/useAppStore';
+import { useOrderStore } from '../../store/useOrderStore';
 import { PageWrapper } from '../../components/layout/PageWrapper';
 import { KitchenOrder, KitchenStatus } from '../../types';
 import { Clock, ChefHat, CheckCircle, Bell, Trash2 } from 'lucide-react';
@@ -108,7 +109,21 @@ const KitchenCard: React.FC<{ order: KitchenOrder }> = ({ order }) => {
 };
 
 export const KitchenScreen: React.FC = () => {
+  const isDemo = useAppStore((state) => state.isDemo);
+  const isSuperAdmin = useAppStore((state) => state.isSuperAdmin);
+  const permissions = useAppStore((state) => state.permissions);
+  const fetchTables = useTableStore((state) => state.fetchTables);
+  const fetchOrders = useOrderStore((state) => state.fetchOrders);
+  const fetchKitchenOrders = useKitchenStore((state) => state.fetchKitchenOrders);
   const orders = useKitchenStore((s) => s.orders);
+
+  useEffect(() => {
+    if (isDemo || isSuperAdmin || permissions.includes('kitchen.view')) {
+      fetchKitchenOrders();
+      fetchTables();
+      fetchOrders();
+    }
+  }, [fetchKitchenOrders, fetchOrders, fetchTables, isDemo, isSuperAdmin, permissions]);
 
   return (
     <PageWrapper className="h-full overflow-hidden p-6 bg-white">

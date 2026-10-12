@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../../store/useOrderStore';
 import { useTableStore } from '../../store/useTableStore';
+import { useAppStore } from '../../store/useAppStore';
 import { PageWrapper } from '../../components/layout/PageWrapper';
 import { CartItem, MenuItem } from '../../types';
 import {
@@ -150,6 +151,7 @@ const CartPanel: React.FC<CartPanelProps> = ({
 );
 
 export const OrderScreen: React.FC = () => {
+  const isDemo = useAppStore((state) => state.isDemo);
   const [activeCategory, setActiveCategory] = useState<string>('All Menu');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
@@ -177,7 +179,7 @@ export const OrderScreen: React.FC = () => {
   };
 
   const [currentTime, setCurrentTime] = useState('');
-  useEffect(() => { fetchMenuItems(); }, [fetchMenuItems]);
+  useEffect(() => { fetchMenuItems(); }, [fetchMenuItems, isDemo]);
   useEffect(() => {
     const fmt = () => setCurrentTime(new Date().toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }));
     fmt();

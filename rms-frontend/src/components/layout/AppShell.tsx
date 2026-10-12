@@ -5,6 +5,7 @@ import { MobileNav } from './MobileNav';
 import { Toast } from '../ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
 import { GuidedTour } from './GuidedTour';
+import { useLocation } from 'react-router-dom';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, headerTitle, heade
   const isDemo = useAppStore((state) => state.isDemo);
   const isSuperAdmin = useAppStore((state) => state.isSuperAdmin);
   const selectedBusinessId = useAppStore((state) => state.selectedBusinessId);
+  const location = useLocation();
   const [tourRun, setTourRun] = useState(0);
   const tourSeenKey = `rms_guided_tour_seen:${isSuperAdmin ? 'super-admin' : isDemo ? 'demo' : 'business'}:${encodeURIComponent(userName || userRole || 'user')}${isSuperAdmin && selectedBusinessId ? `:${selectedBusinessId}` : ''}`;
 
@@ -29,10 +31,10 @@ export const AppShell: React.FC<AppShellProps> = ({ children, headerTitle, heade
   }, [tourSeenKey]);
 
   useEffect(() => {
-    if (!userRole || window.localStorage.getItem(tourSeenKey)) return;
+    if (!userRole || (isSuperAdmin && !selectedBusinessId && location.pathname.startsWith('/super-admin')) || window.localStorage.getItem(tourSeenKey)) return;
     window.localStorage.setItem(tourSeenKey, '1');
     setTourRun((run) => run + 1);
-  }, [tourSeenKey, userRole]);
+  }, [isSuperAdmin, location.pathname, selectedBusinessId, tourSeenKey, userRole]);
 
   return (
     <div className="w-full h-screen flex bg-white text-[#1F221D] font-sans overflow-hidden select-none relative">

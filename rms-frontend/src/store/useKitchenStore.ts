@@ -10,6 +10,7 @@ interface KitchenStore {
   orders: KitchenOrder[];
   isLoading: boolean;
   error: string;
+  setStorageScope: (scope: string) => void;
   fetchKitchenOrders: () => Promise<void>;
   resetTenantData: () => void;
   addOrder: (order: KitchenOrder) => void;
@@ -23,6 +24,9 @@ export const useKitchenStore = create<KitchenStore>()(
       orders: [],
       isLoading: false,
       error: '',
+      setStorageScope: (scope) => {
+        if (typeof window !== 'undefined') window.localStorage.setItem('kitchen-storage-scope', scope);
+      },
 
       fetchKitchenOrders: async () => {
         // Don't clobber in-flight optimistic updates
@@ -85,7 +89,9 @@ export const useKitchenStore = create<KitchenStore>()(
       },
     }),
     {
-      name: 'kitchen-storage',
+      name: typeof window !== 'undefined' && window.localStorage.getItem('kitchen-storage-scope')
+        ? `kitchen-storage:${window.localStorage.getItem('kitchen-storage-scope')}`
+        : 'kitchen-storage',
       partialize: (state) => ({ orders: state.orders }),
     }
   )

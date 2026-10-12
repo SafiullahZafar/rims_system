@@ -193,14 +193,15 @@ export const TablesScreen: React.FC = () => {
   const fetchTables = useTableStore((s) => s.fetchTables);
   const kitchenOrders = useKitchenStore((s) => s.orders);
   const fetchKitchenOrders = useKitchenStore((s) => s.fetchKitchenOrders);
+  const fetchOrders = useOrderStore((s) => s.fetchOrders);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [filterSection, setFilterSection] = useState<string>('All');
 
   useEffect(() => {
-    fetchTables(); fetchKitchenOrders();
-    const interval = setInterval(() => { fetchTables(); fetchKitchenOrders(); }, 15000);
+    fetchTables(); fetchKitchenOrders(); fetchOrders();
+    const interval = setInterval(() => { fetchTables(); fetchKitchenOrders(); fetchOrders(); }, 15000);
     return () => clearInterval(interval);
-  }, [fetchTables, fetchKitchenOrders]);
+  }, [fetchTables, fetchKitchenOrders, fetchOrders]);
 
   const sections = ['All', 'A', 'B', 'C', 'D'];
   const filtered = filterSection === 'All' ? tables : tables.filter((t) => t.section === filterSection);

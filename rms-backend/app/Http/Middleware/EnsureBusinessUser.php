@@ -35,10 +35,21 @@ class EnsureBusinessUser
             || ($user instanceof DemoVisitor && $user->business_id)) {
             $business = Business::query()->whereKey($user->business_id)->where('is_active', true)->first();
             if ($business) {
-                if ($user instanceof DemoVisitor && $business->template_business_id && ! $business->demo_data_initialized_at) {
+                if ($user instanceof DemoVisitor && $business->template_business_id) {
                     DB::transaction(function () use ($business): void {
                         $lockedBusiness = Business::query()->lockForUpdate()->find($business->id);
-                        if ($lockedBusiness && ! $lockedBusiness->demo_data_initialized_at && $lockedBusiness->template_business_id) {
+                        if ($lockedBusiness && $lockedBusiness->template_business_id) {
+                            if ($lockedBusiness->demo_data_initialized_at) {
+                                return;
+                            }
+
+                            $hasSeedData = DB::table('restaurant_tables')->where('business_id', $lockedBusiness->id)->exists()
+                                || DB::table('menu_items')->where('business_id', $lockedBusiness->id)->exists();
+                            if ($hasSeedData) {
+                                $lockedBusiness->update(['demo_data_initialized_at' => now()]);
+                                return;
+                            }
+
                             app(DemoWorkspaceCloner::class)->clone($lockedBusiness->template_business_id, $lockedBusiness->id);
                             $lockedBusiness->update(['demo_data_initialized_at' => now()]);
                         }

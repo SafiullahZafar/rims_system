@@ -30,7 +30,8 @@ import { BusinessesScreen } from './screens/SuperAdmin/BusinessesScreen';
 import { DemoActivityScreen } from './screens/SuperAdmin/DemoActivityScreen';
 import { useAppStore } from './store/useAppStore';
 import { api } from './services/api';
-import { resetTenantStores } from './store/resetTenantStores';
+import { resetTenantStores, setTenantStorageScope } from './store/resetTenantStores';
+import { useCustomerStore } from './store/useCustomerStore';
 
 const DemoEntry: React.FC = () => {
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ const DemoEntry: React.FC = () => {
     api.loginDemo()
       .then((response) => {
         resetTenantStores();
+        setTenantStorageScope(`demo:${response.name}`);
         setUserRole(response.account_type, response.permissions, response.token, response.name, response.role_name, false, true);
         navigate('/dashboard', { replace: true });
       })
@@ -62,8 +64,11 @@ export const App: React.FC = () => {
   const fetchMenuItems = useOrderStore((state) => state.fetchMenuItems);
   const fetchOrders = useOrderStore((state) => state.fetchOrders);
   const fetchKitchenOrders = useKitchenStore((state) => state.fetchKitchenOrders);
+  const fetchCustomers = useCustomerStore((state) => state.fetchCustomers);
   const userRole = useAppStore((state) => state.userRole);
   const isSuperAdmin = useAppStore((state) => state.isSuperAdmin);
+  const isDemo = useAppStore((state) => state.isDemo);
+  const userName = useAppStore((state) => state.userName);
   const selectedBusinessId = useAppStore((state) => state.selectedBusinessId);
   const permissions = useAppStore((state) => state.permissions);
 
@@ -73,11 +78,18 @@ export const App: React.FC = () => {
     if (!userRole || location.pathname === '/login' || location.pathname === '/demo') return;
     if (isSuperAdmin && (!selectedBusinessId || location.pathname.startsWith('/super-admin'))) return;
 
-    if (isSuperAdmin || permissions.includes('tables.view')) fetchTables();
-    if (isSuperAdmin || permissions.includes('menu.manage')) fetchMenuItems();
-    if (isSuperAdmin || permissions.includes('orders.create')) fetchOrders();
-    if (isSuperAdmin || permissions.includes('kitchen.view')) fetchKitchenOrders();
-  }, [location.pathname, fetchKitchenOrders, fetchMenuItems, fetchOrders, fetchTables, isSuperAdmin, permissions, selectedBusinessId, userRole]);
+    const storageScope = isSuperAdmin
+      ? `business:${selectedBusinessId}`
+      : isDemo
+        ? `demo:${userName ?? 'anonymous'}`
+        : 'business:owner';
+    setTenantStorageScope(storageScope);
+    if (isSuperAdmin || isDemo || permissions.includes('tables.view')) fetchTables();
+    if (isSuperAdmin || isDemo || permissions.includes('menu.manage')) fetchMenuItems();
+    if (isSuperAdmin || isDemo || permissions.includes('orders.create')) fetchOrders();
+    if (isSuperAdmin || isDemo || permissions.includes('kitchen.view')) fetchKitchenOrders();
+    if (isDemo && location.pathname === '/dashboard') fetchCustomers();
+  }, [location.pathname, fetchCustomers, fetchKitchenOrders, fetchMenuItems, fetchOrders, fetchTables, isDemo, isSuperAdmin, permissions, selectedBusinessId, userName, userRole]);
 
   const isLogin = location.pathname === '/login';
 

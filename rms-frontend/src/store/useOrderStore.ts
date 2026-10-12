@@ -10,6 +10,7 @@ interface OrderStore {
   isLoading: boolean;
   isSubmitting: boolean;
   error: string;
+  setStorageScope: (scope: string) => void;
   orderType: OrderType;
   tableId: number | null;
   fetchMenuItems: () => Promise<void>;
@@ -36,6 +37,9 @@ export const useOrderStore = create<OrderStore>()(
       isLoading: false,
       isSubmitting: false,
       error: '',
+      setStorageScope: (scope) => {
+        if (typeof window !== 'undefined') window.localStorage.setItem('order-storage-scope', scope);
+      },
       orderType: 'dine-in',
       tableId: null,
 
@@ -161,7 +165,9 @@ export const useOrderStore = create<OrderStore>()(
       getTotal: () => get().getSubtotal() + get().getTax(),
     }),
     {
-      name: 'order-storage',
+      name: typeof window !== 'undefined' && window.localStorage.getItem('order-storage-scope')
+        ? `order-storage:${window.localStorage.getItem('order-storage-scope')}`
+        : 'order-storage',
       partialize: (state) => ({
         cartItems: state.cartItems,
         orders: state.orders,

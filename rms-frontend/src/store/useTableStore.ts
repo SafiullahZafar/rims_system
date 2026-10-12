@@ -7,6 +7,7 @@ interface TableStore {
   tables: Table[];
   isLoading: boolean;
   error: string;
+  setStorageScope: (scope: string) => void;
   fetchTables: () => Promise<void>;
   resetTenantData: () => void;
   updateTableStatus: (id: number, status: TableStatus, orderId?: string, amount?: number) => Promise<void>;
@@ -19,6 +20,9 @@ export const useTableStore = create<TableStore>()(
       tables: [],
       isLoading: false,
       error: '',
+      setStorageScope: (scope) => {
+        if (typeof window !== 'undefined') window.localStorage.setItem('table-storage-scope', scope);
+      },
       fetchTables: async () => {
         set({ isLoading: true, error: '' });
         try {
@@ -77,7 +81,9 @@ export const useTableStore = create<TableStore>()(
       getTableById: (id) => get().tables.find((t) => t.id === id),
     }),
     {
-      name: 'table-storage',
+      name: typeof window !== 'undefined' && window.localStorage.getItem('table-storage-scope')
+        ? `table-storage:${window.localStorage.getItem('table-storage-scope')}`
+        : 'table-storage',
       partialize: (state) => ({ tables: state.tables }),
     }
   )

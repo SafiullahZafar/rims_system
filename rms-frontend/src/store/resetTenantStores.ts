@@ -9,3 +9,10 @@ export const resetTenantStores = () => {
   useKitchenStore.getState().resetTenantData();
   useCustomerStore.getState().resetTenantData();
 };
+
+export const setTenantStorageScope = (scope: string) => {
+  useTableStore.getState().setStorageScope(scope);
+  useOrderStore.getState().setStorageScope(scope);
+  useKitchenStore.getState().setStorageScope(scope);
+  useCustomerStore.getState().setStorageScope(scope);
+};

@@ -7,6 +7,7 @@ interface CustomerStore {
   customers: Customer[];
   isLoading: boolean;
   error: string;
+  setStorageScope: (scope: string) => void;
   fetchCustomers: () => Promise<void>;
   resetTenantData: () => void;
   createCustomer: (payload: { name: string; phone?: string; email?: string; notes?: string }) => Promise<void>;
@@ -20,6 +21,9 @@ export const useCustomerStore = create<CustomerStore>()(
       customers: [],
       isLoading: false,
       error: '',
+      setStorageScope: (scope) => {
+        if (typeof window !== 'undefined') window.localStorage.setItem('customer-storage-scope', scope);
+      },
 
       fetchCustomers: async () => {
         set({ isLoading: true, error: '' });
@@ -91,7 +95,9 @@ export const useCustomerStore = create<CustomerStore>()(
       },
     }),
     {
-      name: 'customer-storage',
+      name: typeof window !== 'undefined' && window.localStorage.getItem('customer-storage-scope')
+        ? `customer-storage:${window.localStorage.getItem('customer-storage-scope')}`
+        : 'customer-storage',
       partialize: (state) => ({ customers: state.customers }),
     }
   )
