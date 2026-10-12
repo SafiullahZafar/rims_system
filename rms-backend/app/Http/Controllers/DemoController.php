@@ -30,6 +30,9 @@ class DemoController extends Controller
                 'template_business_id' => $seedBusiness->id,
             ]);
 
+            app(DemoWorkspaceCloner::class)->clone($seedBusiness->id, $sessionBusiness->id);
+            $sessionBusiness->update(['demo_data_initialized_at' => now()]);
+
             $visitor = DemoVisitor::query()->create([
                 'business_id' => $sessionBusiness->id,
                 'name' => 'demouser_pending',

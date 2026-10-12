@@ -27,7 +27,7 @@ class DemoWorkspaceCloner
         $this->copyTable('orders', $sourceBusinessId, $targetBusinessId, $idMaps, [
             'restaurant_table_id' => 'restaurant_tables',
         ]);
-        $this->copyTable('order_items', $sourceBusinessId, $targetBusinessId, $idMaps, [
+        $this->copyChildTable('order_items', 'orders', 'order_id', $sourceBusinessId, $targetBusinessId, $idMaps, [
             'order_id' => 'orders',
             'menu_item_id' => 'menu_items',
         ]);
@@ -35,7 +35,7 @@ class DemoWorkspaceCloner
             'order_id' => 'orders',
             'restaurant_table_id' => 'restaurant_tables',
         ]);
-        $this->copyTable('kitchen_order_items', $sourceBusinessId, $targetBusinessId, $idMaps, [
+        $this->copyChildTable('kitchen_order_items', 'kitchen_orders', 'kitchen_order_id', $sourceBusinessId, $targetBusinessId, $idMaps, [
             'kitchen_order_id' => 'kitchen_orders',
         ]);
         $this->copyTable('attendance_logs', $sourceBusinessId, $targetBusinessId, $idMaps, [
@@ -58,19 +58,54 @@ class DemoWorkspaceCloner
     ): void {
         $idMaps[$table] ??= [];
 
-        foreach (DB::table($table)->where('business_id', $sourceBusinessId)->orderBy('id')->get() as $sourceRow) {
+        $rows = DB::table($table)->where('business_id', $sourceBusinessId)->orderBy('id')->get();
+        $this->insertRows($table, $rows, $targetBusinessId, $idMaps, $references, $transform);
+    }
+
+    private function copyChildTable(
+        string $table,
+        string $parentTable,
+        string $parentForeignKey,
+        int $sourceBusinessId,
+        int $targetBusinessId,
+        array &$idMaps,
+        array $references = [],
+    ): void {
+        $parentIds = array_keys($idMaps[$parentTable] ?? []);
+        if ($parentIds === []) {
+            $idMaps[$table] = [];
+            return;
+        }
+
+        $rows = DB::table($table)->whereIn($parentForeignKey, $parentIds)->orderBy('id')->get();
+        $this->insertRows($table, $rows, $targetBusinessId, $idMaps, $references);
+    }
+
+    private function insertRows(
+        string $table,
+        iterable $rows,
+        int $targetBusinessId,
+        array &$idMaps,
+        array $references = [],
+        ?callable $transform = null,
+    ): void {
+        $idMaps[$table] ??= [];
+
+        foreach ($rows as $sourceRow) {
             $row = (array) $sourceRow;
             $sourceId = $row['id'];
             unset($row['id']);
-            $row['business_id'] = $targetBusinessId;
+            if (array_key_exists('business_id', $row)) {
+                $row['business_id'] = $targetBusinessId;
+            }
 
             foreach ($references as $foreignKey => $referencedTable) {
-                if ($row[$foreignKey] !== null) {
+                if (array_key_exists($foreignKey, $row) && $row[$foreignKey] !== null) {
                     $row[$foreignKey] = $idMaps[$referencedTable][$row[$foreignKey]] ?? null;
                 }
             }
 
-            if ($table === 'restaurant_tables' && $row['current_order_code'] !== null) {
+            if ($table === 'restaurant_tables' && ($row['current_order_code'] ?? null) !== null) {
                 $row['current_order_code'] = null;
             }
 
