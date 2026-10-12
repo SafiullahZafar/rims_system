@@ -5,26 +5,47 @@ namespace App\Http\Controllers;
 use App\Models\Business;
 use App\Models\DemoActivityLog;
 use App\Models\DemoVisitor;
+use App\Services\DemoWorkspaceCloner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class DemoController extends Controller
 {
     public function login(Request $request): JsonResponse
     {
-        $business = Business::query()->where('is_demo', true)->where('is_active', true)->firstOrFail();
-        $visitor = DemoVisitor::query()->create([
-            'business_id' => $business->id,
-            'name' => 'Demo visitor',
-            'ip_address' => $request->ip(),
-        ]);
-        $visitor->update(['name' => 'demouser_'.$visitor->id]);
-        DemoActivityLog::create([
-            'demo_visitor_id' => $visitor->id,
-            'method' => 'POST',
-            'path' => 'api/demo/login',
-            'ip_address' => $request->ip(),
-        ]);
+        $visitor = DB::transaction(function () use ($request): DemoVisitor {
+            $seedBusiness = Business::query()
+                ->where('slug', 'rims-shared-demo')
+                ->where('is_demo', true)
+                ->where('is_active', true)
+                ->firstOrFail();
+
+            $sessionBusiness = Business::query()->create([
+                'name' => 'Demo visitor workspace',
+                'slug' => 'demo-visit-'.Str::lower((string) Str::uuid()),
+                'is_demo' => true,
+                'is_active' => true,
+                'template_business_id' => $seedBusiness->id,
+            ]);
+
+            $visitor = DemoVisitor::query()->create([
+                'business_id' => $sessionBusiness->id,
+                'name' => 'demouser_pending',
+                'ip_address' => $request->ip(),
+            ]);
+            $visitor->update(['name' => 'demouser_'.$visitor->id]);
+
+            DemoActivityLog::create([
+                'demo_visitor_id' => $visitor->id,
+                'method' => 'POST',
+                'path' => 'api/demo/login',
+                'ip_address' => $request->ip(),
+            ]);
+
+            return $visitor;
+        });
 
         return response()->json([
             'message' => 'Demo access started.',
@@ -36,7 +57,7 @@ class DemoController extends Controller
             'is_demo' => true,
             'is_super_admin' => false,
             'screen' => 'dashboard',
-            'permissions' => ['/admin', '/settings'],
+            'permissions' => array_values(array_unique(array_merge(['/admin', '/settings'], BusinessController::MODULES))),
         ], 201);
     }
 

@@ -5,8 +5,10 @@ namespace App\Http\Middleware;
 use App\Models\DemoVisitor;
 use App\Models\Business;
 use App\Models\Employee;
+use App\Services\DemoWorkspaceCloner;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureBusinessUser
@@ -17,7 +19,18 @@ class EnsureBusinessUser
 
         if (($user instanceof Employee && ! $user->is_super_admin && $user->business_id)
             || ($user instanceof DemoVisitor && $user->business_id)) {
-            if (Business::query()->whereKey($user->business_id)->where('is_active', true)->exists()) {
+            $business = Business::query()->whereKey($user->business_id)->where('is_active', true)->first();
+            if ($business) {
+                if ($user instanceof DemoVisitor && $business->template_business_id && ! $business->demo_data_initialized_at) {
+                    DB::transaction(function () use ($business): void {
+                        $lockedBusiness = Business::query()->lockForUpdate()->find($business->id);
+                        if ($lockedBusiness && ! $lockedBusiness->demo_data_initialized_at && $lockedBusiness->template_business_id) {
+                            app(DemoWorkspaceCloner::class)->clone($lockedBusiness->template_business_id, $lockedBusiness->id);
+                            $lockedBusiness->update(['demo_data_initialized_at' => now()]);
+                        }
+                    });
+                }
+
                 return $next($request);
             }
 

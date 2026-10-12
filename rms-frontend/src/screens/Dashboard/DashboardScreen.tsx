@@ -21,7 +21,16 @@ export const DashboardScreen: React.FC = () => {
   const tables = useTableStore((s) => s.tables);
   const kitchenOrders = useKitchenStore((s) => s.orders);
 
-  const todayRevenue = orders.reduce((s, o) => s + o.amount, 0);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  const todayRevenue = orders.reduce((sum, order) => {
+    const createdAt = Date.parse(order.createdAt ?? '');
+    return createdAt >= todayStart.getTime() && createdAt < tomorrowStart.getTime()
+      ? sum + order.amount
+      : sum;
+  }, 0);
   const totalOrders = orders.length;
   const inProgressCount = kitchenOrders.filter((o) => o.status === 'cooking' || o.status === 'new').length;
   const occupiedCount = tables.filter((t) => t.status === 'occupied').length;
@@ -34,37 +43,33 @@ export const DashboardScreen: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             title="Today's Revenue"
-            value={todayRevenue || 6000}
+            value={todayRevenue}
             prefix="$"
             icon={TrendingUp}
             accent="#FF7A10"
-            trend="+8.9% vs yesterday"
-            trendPositive
+            trend={orders.length ? `${orders.length} orders recorded` : 'No sales yet'}
           />
           <StatsCard
             title="Total Orders"
-            value={totalOrders || 128}
+            value={totalOrders}
             icon={Receipt}
             accent="#2E7D32"
-            trend="+4.9% growth"
-            trendPositive
+            trend={totalOrders ? 'Orders in this workspace' : 'No orders yet'}
           />
           <StatsCard
             title="Kitchen In Progress"
-            value={inProgressCount || 14}
+            value={inProgressCount}
             icon={Flame}
             accent="#FF7A10"
-            trend={`${inProgressCount} cooking now`}
-            trendPositive
+            trend={inProgressCount ? `${inProgressCount} active` : 'Nothing in progress'}
           />
           <StatsCard
             title="Table Occupancy"
-            value={occupancyPct || 75}
+            value={occupancyPct}
             suffix="%"
             icon={Grid}
             accent="#1565C0"
-            trend={`${occupiedCount}/${tables.length || 12} occupied`}
-            trendPositive
+            trend={`${occupiedCount}/${tables.length} occupied`}
           />
         </div>
 

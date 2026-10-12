@@ -9,40 +9,13 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
+import { useOrderStore } from '../../store/useOrderStore';
 
 interface BarData {
   label: string;
   revenue: number;
   orders: number;
 }
-
-const mockDataToday: BarData[] = [
-  { label: '8 AM', revenue: 1400, orders: 8 },
-  { label: '10 AM', revenue: 3200, orders: 16 },
-  { label: '12 PM', revenue: 5800, orders: 34 },
-  { label: '2 PM', revenue: 4900, orders: 28 },
-  { label: '4 PM', revenue: 2600, orders: 14 },
-  { label: '6 PM', revenue: 6400, orders: 42 },
-  { label: '8 PM', revenue: 7100, orders: 49 },
-  { label: '10 PM', revenue: 3800, orders: 22 },
-];
-
-const mockData7Days: BarData[] = [
-  { label: 'Mon', revenue: 12400, orders: 84 },
-  { label: 'Tue', revenue: 15800, orders: 98 },
-  { label: 'Wed', revenue: 11200, orders: 76 },
-  { label: 'Thu', revenue: 16900, orders: 110 },
-  { label: 'Fri', revenue: 22400, orders: 145 },
-  { label: 'Sat', revenue: 28500, orders: 190 },
-  { label: 'Sun', revenue: 24100, orders: 162 },
-];
-
-const mockData30Days: BarData[] = [
-  { label: 'Week 1', revenue: 84000, orders: 540 },
-  { label: 'Week 2', revenue: 96000, orders: 620 },
-  { label: 'Week 3', revenue: 112000, orders: 740 },
-  { label: 'Week 4', revenue: 108000, orders: 710 },
-];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -66,19 +39,39 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export const SalesBarChart: React.FC = () => {
   const [period, setPeriod] = useState<'today' | '7days' | '30days'>('7days');
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-
-  const getData = () => {
-    switch (period) {
-      case 'today':
-        return mockDataToday;
-      case '7days':
-        return mockData7Days;
-      case '30days':
-        return mockData30Days;
+  const orders = useOrderStore((state) => state.orders);
+  const now = new Date();
+  const start = new Date(now);
+  if (period === 'today') start.setHours(0, 0, 0, 0);
+  else if (period === '7days') start.setDate(now.getDate() - 6);
+  else start.setDate(now.getDate() - 29);
+  const periodOrders = orders.filter((order) => {
+    const timestamp = Date.parse(order.createdAt ?? '');
+    return !Number.isNaN(timestamp) && timestamp >= start.getTime() && timestamp <= now.getTime();
+  });
+  const buckets = period === 'today' ? 8 : period === '7days' ? 7 : 4;
+  const chartData: BarData[] = Array.from({ length: buckets }, (_, index) => ({
+    label: period === 'today'
+      ? `${String(index * 3).padStart(2, '0')}:00`
+      : period === '7days'
+        ? new Date(start.getFullYear(), start.getMonth(), start.getDate() + index).toLocaleDateString(undefined, { weekday: 'short' })
+        : `Week ${index + 1}`,
+    revenue: 0,
+    orders: 0,
+  }));
+  periodOrders.forEach((order) => {
+    const timestamp = Date.parse(order.createdAt ?? '');
+    const date = new Date(timestamp);
+    const index = period === 'today'
+      ? Math.min(Math.floor(date.getHours() / 3), 7)
+      : period === '7days'
+        ? Math.min(Math.floor((new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() - new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime()) / 86400000), 6)
+        : Math.min(Math.floor((timestamp - start.getTime()) / (7 * 86400000)), 3);
+    if (index >= 0) {
+      chartData[index].revenue += order.amount;
+      chartData[index].orders += 1;
     }
-  };
-
-  const chartData = getData();
+  });
 
   return (
     <div className="bg-white border border-[#E9E5E1] rounded-2xl p-5 shadow-sm flex flex-col h-full">
@@ -108,6 +101,7 @@ export const SalesBarChart: React.FC = () => {
       </div>
 
       {/* Bar Chart Container */}
+      {orders.length === 0 && <p className="text-xs text-[#666A64]">No sales data yet for this workspace.</p>}
       <div className="flex-1 w-full min-h-[220px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart

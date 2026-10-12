@@ -132,7 +132,17 @@ export const useAppStore = create<AppState>((set) => ({
       isDemo,
     };
     writeStoredSession(session);
-    set({ userRole: role, permissions, token: token ?? null, userName: userName ?? null, userRoleName: userRoleName ?? null, isSuperAdmin, isDemo });
+    set({
+      userRole: role,
+      permissions,
+      token: token ?? null,
+      userName: userName ?? null,
+      userRoleName: userRoleName ?? null,
+      isSuperAdmin,
+      isDemo,
+      selectedTableId: null,
+      notifications: [],
+    });
   },
 
   setPermissions: (permissions) => {

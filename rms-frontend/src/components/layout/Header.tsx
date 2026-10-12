@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTime } from '../../hooks/useTime';
 import { useAppStore } from '../../store/useAppStore';
-import { Bell, Menu, Search, MapPin, ShieldCheck } from 'lucide-react';
+import { Bell, Menu, Search, ShieldCheck } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 
 interface HeaderProps {
@@ -45,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumb, onMenuClick }
         </div>
       </div>
 
-      {/* Center: Global Search Bar & Branch Location Pill */}
+      {/* Center: Global Search Bar */}
       <div className="hidden lg:flex items-center gap-3 flex-1 max-w-xl mx-4">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#666A64]" />
@@ -56,10 +56,6 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumb, onMenuClick }
           />
         </div>
 
-        <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#F7F5F2] border border-[#E9E5E1] text-xs font-bold text-[#1F221D] flex-shrink-0">
-          <MapPin className="w-3.5 h-3.5 text-[#FF7A10]" />
-          <span>Main Flagship Branch</span>
-        </div>
       </div>
 
       {/* Right: Live Clock + System Status + Notifications + Avatar */}

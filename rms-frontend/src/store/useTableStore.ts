@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Table, TableStatus } from '../types';
-import { MOCK_TABLES } from '../constants/mockData';
 import { api } from '../services/api';
 
 interface TableStore {
@@ -9,6 +8,7 @@ interface TableStore {
   isLoading: boolean;
   error: string;
   fetchTables: () => Promise<void>;
+  resetTenantData: () => void;
   updateTableStatus: (id: number, status: TableStatus, orderId?: string, amount?: number) => Promise<void>;
   getTableById: (id: number) => Table | undefined;
 }
@@ -16,12 +16,11 @@ interface TableStore {
 export const useTableStore = create<TableStore>()(
   persist(
     (set, get) => ({
-      tables: MOCK_TABLES,
+      tables: [],
       isLoading: false,
       error: '',
       fetchTables: async () => {
-        const { tables } = get();
-        if (tables.length === 0 || tables === MOCK_TABLES) set({ isLoading: true, error: '' });
+        set({ isLoading: true, error: '' });
         try {
           const data = await api.getTables();
           set({ tables: data, isLoading: false });
@@ -32,6 +31,7 @@ export const useTableStore = create<TableStore>()(
           });
         }
       },
+      resetTenantData: () => set({ tables: [], isLoading: false, error: '' }),
   updateTableStatus: async (id, status, orderId, amount) => {
     const current = get().getTableById(id);
     if (!current) return;

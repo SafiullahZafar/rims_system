@@ -1,14 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { KitchenOrder, KitchenStatus } from '../types';
-import { MOCK_KITCHEN_ORDERS } from '../constants/mockData';
 import { api } from '../services/api';
+
+// Ignore list responses that started before a kitchen mutation.
+let kitchenMutationVersion = 0;
 
 interface KitchenStore {
   orders: KitchenOrder[];
   isLoading: boolean;
   error: string;
   fetchKitchenOrders: () => Promise<void>;
+  resetTenantData: () => void;
   addOrder: (order: KitchenOrder) => void;
   updateOrderStatus: (id: string, status: KitchenStatus) => Promise<void>;
   removeOrder: (id: string) => Promise<void>;
@@ -17,17 +20,21 @@ interface KitchenStore {
 export const useKitchenStore = create<KitchenStore>()(
   persist(
     (set, get) => ({
-      orders: MOCK_KITCHEN_ORDERS,
+      orders: [],
       isLoading: false,
       error: '',
 
       fetchKitchenOrders: async () => {
         // Don't clobber in-flight optimistic updates
         if (get().isLoading) return;
+        const versionAtStart = kitchenMutationVersion;
         set({ isLoading: true, error: '' });
         try {
           const data = await api.getKitchenOrders();
-          set({ orders: data, isLoading: false });
+          set((state) => ({
+            orders: versionAtStart === kitchenMutationVersion ? data : state.orders,
+            isLoading: false,
+          }));
         } catch (error) {
           set({
             isLoading: false,
@@ -36,38 +43,44 @@ export const useKitchenStore = create<KitchenStore>()(
         }
       },
 
+      resetTenantData: () => set({ orders: [], error: '', isLoading: false }),
+
   addOrder: (order) =>
     set((state) => ({ orders: [order, ...state.orders] })),
 
   updateOrderStatus: async (id, status) => {
-    // Optimistic update — move card immediately, no bounce
+    const previousOrder = get().orders.find((order) => order.id === id);
+    if (!previousOrder) return;
+    kitchenMutationVersion += 1;
     set((state) => ({
-      orders: state.orders.map((order) =>
-        order.id === id ? { ...order, status } : order
-      ),
+      orders: state.orders.map((order) => order.id === id ? { ...order, status } : order),
     }));
     try {
-      // Persist to backend silently — don't overwrite local state with response
-      await api.updateKitchenOrder(id, status);
-    } catch (error) {
-      // On failure, revert the optimistic update
+      const savedOrder = await api.updateKitchenOrder(id, status);
       set((state) => ({
-        orders: state.orders.map((order) =>
-          order.id === id ? { ...order, status: order.status } : order
-        ),
+        orders: state.orders.map((order) => order.id === id ? savedOrder : order),
+      }));
+    } catch (error) {
+      set((state) => ({
+        orders: state.orders.map((order) => order.id === id ? previousOrder : order),
         error: error instanceof Error ? error.message : 'Could not update kitchen order.',
       }));
+      throw error;
     }
   },
 
       removeOrder: async (id) => {
-        set((state) => ({
-          orders: state.orders.filter((order) => order.id !== id),
-        }));
+        const removedOrder = get().orders.find((order) => order.id === id);
+        kitchenMutationVersion += 1;
+        set((state) => ({ orders: state.orders.filter((order) => order.id !== id) }));
         try {
           await api.deleteKitchenOrder(id);
         } catch (error) {
-          set({ error: error instanceof Error ? error.message : 'Could not remove kitchen order.' });
+          set((state) => ({
+            orders: removedOrder ? [removedOrder, ...state.orders] : state.orders,
+            error: error instanceof Error ? error.message : 'Could not remove kitchen order.',
+          }));
+          throw error;
         }
       },
     }),

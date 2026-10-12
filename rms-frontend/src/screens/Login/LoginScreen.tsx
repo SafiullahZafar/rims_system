@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
+import { resetTenantStores } from '../../store/resetTenantStores';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToast } from '../../hooks/useToast';
 import {
@@ -68,6 +69,7 @@ export const LoginScreen: React.FC = () => {
     );
 
     if (response) {
+      resetTenantStores();
       setUserRole(response.account_type, response.permissions, response.token, response.name, response.role_name, response.is_super_admin, response.is_demo);
       toast.success(`${selectedRole === 'admin' ? 'Administrator' : 'Staff'} Signed In Successfully!`);
       const finalScreen = response.screen === 'staff' ? 'tables' : response.screen;

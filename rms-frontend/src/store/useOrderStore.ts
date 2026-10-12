@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { MenuItem, CartItem, OrderType, RecentOrder } from '../types';
-import { MOCK_RECENT_ORDERS } from '../constants/mockData';
 import { api } from '../services/api';
 
 interface OrderStore {
@@ -15,6 +14,7 @@ interface OrderStore {
   tableId: number | null;
   fetchMenuItems: () => Promise<void>;
   fetchOrders: () => Promise<void>;
+  resetTenantData: () => void;
   addItem: (item: MenuItem) => void;
   removeItem: (id: number) => void;
   updateQuantity: (id: number, qty: number) => void;
@@ -31,7 +31,7 @@ export const useOrderStore = create<OrderStore>()(
   persist(
     (set, get) => ({
       cartItems: [],
-      orders: MOCK_RECENT_ORDERS,
+      orders: [],
       menuItems: [],
       isLoading: false,
       isSubmitting: false,
@@ -59,6 +59,8 @@ export const useOrderStore = create<OrderStore>()(
       set({ error: error instanceof Error ? error.message : 'Could not load orders.' });
     }
   },
+
+      resetTenantData: () => set({ cartItems: [], orders: [], menuItems: [], error: '', isLoading: false, isSubmitting: false, orderType: 'dine-in', tableId: null }),
 
   addItem: (item) => {
     set((state) => {
@@ -114,6 +116,7 @@ export const useOrderStore = create<OrderStore>()(
         status: order.status,
         amount: Number(order.total),
         time: 'Just now',
+        createdAt: new Date().toISOString(),
       };
 
       set((state) => ({

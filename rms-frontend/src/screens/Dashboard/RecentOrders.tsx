@@ -10,51 +10,20 @@ const statusStyle: Record<string, { bg: string; text: string; label: string }> =
   'completed':   { bg: 'rgba(85,87,84,0.10)', text: '#555754', label: 'Completed' },
 };
 
-const defaultMockOrders = [
-  { id: '#ORD-9821', tableId: 4, items: 3, status: 'in-progress', amount: 48.50, time: '10 mins ago' },
-  { id: '#ORD-9820', tableId: 2, items: 5, status: 'ready', amount: 82.00, time: '14 mins ago' },
-  { id: '#ORD-9819', tableId: 8, items: 2, status: 'completed', amount: 34.20, time: '22 mins ago' },
-  { id: '#ORD-9818', tableId: 1, items: 4, status: 'waiting', amount: 65.00, time: '28 mins ago' },
-  { id: '#ORD-9817', tableId: 6, items: 6, status: 'completed', amount: 110.40, time: '35 mins ago' },
-  { id: '#ORD-9816', tableId: 3, items: 2, status: 'completed', amount: 29.80, time: '42 mins ago' },
-  { id: '#ORD-9815', tableId: 5, items: 4, status: 'ready', amount: 74.00, time: '50 mins ago' },
-  { id: '#ORD-9814', tableId: 7, items: 3, status: 'completed', amount: 56.10, time: '1 hr ago' },
-  { id: '#ORD-9813', tableId: 9, items: 5, status: 'completed', amount: 92.30, time: '1 hr 15 mins ago' },
-  { id: '#ORD-9812', tableId: 11, items: 1, status: 'completed', amount: 18.50, time: '1 hr 30 mins ago' },
-  { id: '#ORD-9811', tableId: 10, items: 4, status: 'completed', amount: 64.00, time: '1 hr 45 mins ago' },
-  { id: '#ORD-9810', tableId: 12, items: 2, status: 'completed', amount: 28.50, time: '2 hrs ago' },
-];
-
 export const RecentOrders: React.FC = () => {
   const storeOrders = useOrderStore((s) => s.orders);
   const tables = useTableStore((s) => s.tables);
 
-  const displayOrders = storeOrders.length > 0
-    ? storeOrders.map(o => ({
+  const displayOrders = storeOrders.map(o => ({
         id: `#ORD-${o.id}`,
         tableId: o.tableId,
         items: o.items,
         status: o.status,
         amount: o.amount,
-        time: 'Just now',
-      }))
-    : defaultMockOrders;
-
-  // 12 Tables for floor status widget
-  const displayTables = tables.length > 0 ? tables : [
-    { id: 1, section: 'A', seats: 4, status: 'occupied', duration: '28', amount: 65.00 },
-    { id: 2, section: 'A', seats: 2, status: 'occupied', duration: '14', amount: 82.00 },
-    { id: 3, section: 'B', seats: 6, status: 'available', duration: '0', amount: 0 },
-    { id: 4, section: 'B', seats: 4, status: 'occupied', duration: '10', amount: 48.50 },
-    { id: 5, section: 'C', seats: 2, status: 'reserved', duration: '0', amount: 0 },
-    { id: 6, section: 'C', seats: 8, status: 'available', duration: '0', amount: 0 },
-    { id: 7, section: 'D', seats: 4, status: 'occupied', duration: '45', amount: 112.00 },
-    { id: 8, section: 'D', seats: 2, status: 'available', duration: '0', amount: 0 },
-    { id: 9, section: 'A', seats: 6, status: 'reserved', duration: '0', amount: 0 },
-    { id: 10, section: 'B', seats: 4, status: 'occupied', duration: '18', amount: 55.40 },
-    { id: 11, section: 'C', seats: 2, status: 'available', duration: '0', amount: 0 },
-    { id: 12, section: 'D', seats: 8, status: 'occupied', duration: '32', amount: 94.80 },
-  ];
+        time: o.time,
+      }));
+  const displayTables = tables;
+  const zones = [...new Set(displayTables.map((table) => table.section))].sort();
 
   return (
     <div className="bg-white border border-[#E9E5E1] rounded-2xl p-5 flex flex-col gap-5 shadow-xs h-full">
@@ -83,6 +52,9 @@ export const RecentOrders: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E9E5E1]">
+              {displayOrders.length === 0 && (
+                <tr><td colSpan={6} className="py-8 text-center text-sm text-[#666A64]">No orders yet in this workspace.</td></tr>
+              )}
               {displayOrders.map((order, idx) => {
                 const s = statusStyle[order.status] ?? statusStyle['completed'];
                 return (
@@ -120,12 +92,13 @@ export const RecentOrders: React.FC = () => {
             </h4>
           </div>
           <span className="text-[11px] font-semibold text-[#666A64]">
-            Active Zones A - D ({displayTables.length} tables)
+            {displayTables.length ? `Zones ${zones.join(', ')} (${displayTables.length} tables)` : 'No tables configured'}
           </span>
         </div>
 
         <div className="overflow-y-auto max-h-[220px] custom-scrollbar pr-1">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            {displayTables.length === 0 && <p className="col-span-full py-6 text-center text-sm text-[#666A64]">No tables have been set up yet.</p>}
             {displayTables.map((tbl) => {
               const isOccupied = tbl.status === 'occupied';
               const isReserved = tbl.status === 'reserved';
@@ -167,10 +140,10 @@ export const RecentOrders: React.FC = () => {
                     {isOccupied ? (
                       <>
                         <span className="text-[#FF7A10] font-bold font-mono">
-                          ${tbl.amount ? tbl.amount.toFixed(2) : '45.00'}
+                          {tbl.amount !== undefined ? `$${tbl.amount.toFixed(2)}` : 'Active'}
                         </span>
                         <span className="text-[10px] text-[#666A64] font-medium flex items-center gap-0.5">
-                          <Clock className="w-2.5 h-2.5" /> {tbl.duration || '20'}m
+                          <Clock className="w-2.5 h-2.5" /> {tbl.duration !== undefined ? `${tbl.duration}m` : 'In progress'}
                         </span>
                       </>
                     ) : isReserved ? (

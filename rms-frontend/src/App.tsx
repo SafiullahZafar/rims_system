@@ -30,6 +30,7 @@ import { BusinessesScreen } from './screens/SuperAdmin/BusinessesScreen';
 import { DemoActivityScreen } from './screens/SuperAdmin/DemoActivityScreen';
 import { useAppStore } from './store/useAppStore';
 import { api } from './services/api';
+import { resetTenantStores } from './store/resetTenantStores';
 
 const DemoEntry: React.FC = () => {
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ const DemoEntry: React.FC = () => {
   useEffect(() => {
     api.loginDemo()
       .then((response) => {
+        resetTenantStores();
         setUserRole(response.account_type, response.permissions, response.token, response.name, response.role_name, false, true);
         navigate('/dashboard', { replace: true });
       })

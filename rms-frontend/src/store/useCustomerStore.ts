@@ -8,6 +8,7 @@ interface CustomerStore {
   isLoading: boolean;
   error: string;
   fetchCustomers: () => Promise<void>;
+  resetTenantData: () => void;
   createCustomer: (payload: { name: string; phone?: string; email?: string; notes?: string }) => Promise<void>;
   updateCustomer: (id: number, payload: Partial<{ name: string; phone: string; email: string; notes: string }>) => Promise<void>;
   deleteCustomer: (id: number) => Promise<void>;
@@ -32,6 +33,8 @@ export const useCustomerStore = create<CustomerStore>()(
           });
         }
       },
+
+      resetTenantData: () => set({ customers: [], isLoading: false, error: '' }),
 
       createCustomer: async (payload) => {
         set({ isLoading: true, error: '' });

@@ -161,6 +161,7 @@ export const mapRecentOrder = (order: BackendOrder): RecentOrder => ({
   status: order.status,
   amount: asNumber(order.total),
   time: order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
+  createdAt: order.created_at,
 });
 
 export const mapKitchenOrder = (order: BackendKitchenOrder): KitchenOrder => ({

@@ -50,6 +50,8 @@ const KitchenCard: React.FC<{ order: KitchenOrder }> = ({ order }) => {
         await updateTableStatus(order.tableId, 'served');
         addNotification(`Table ${order.tableId} — served ✅`, 'success');
       }
+    } catch (error) {
+      addNotification(error instanceof Error ? error.message : 'Could not update this kitchen order.', 'error');
     } finally {
       setIsProcessing(false);
     }

@@ -28,4 +28,5 @@ export interface RecentOrder {
   status: string;
   amount: number;
   time: string;
+  createdAt?: string;
 }
