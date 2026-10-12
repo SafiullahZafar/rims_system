@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { MobileNav } from './MobileNav';
 import { Toast } from '../ui/Toast';
 import { useAppStore } from '../../store/useAppStore';
+import { GuidedTour } from './GuidedTour';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -14,6 +15,23 @@ interface AppShellProps {
 export const AppShell: React.FC<AppShellProps> = ({ children, headerTitle, headerBreadcrumb }) => {
   const sidebarCollapsed = useAppStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useAppStore((state) => state.toggleSidebar);
+  const userRole = useAppStore((state) => state.userRole);
+  const userName = useAppStore((state) => state.userName);
+  const isDemo = useAppStore((state) => state.isDemo);
+  const isSuperAdmin = useAppStore((state) => state.isSuperAdmin);
+  const [tourRun, setTourRun] = useState(0);
+  const tourSeenKey = `rms_guided_tour_seen:${isSuperAdmin ? 'super-admin' : isDemo ? 'demo' : 'business'}:${encodeURIComponent(userName || userRole || 'user')}`;
+
+  const startTour = useCallback(() => {
+    window.localStorage.setItem(tourSeenKey, '1');
+    setTourRun((run) => run + 1);
+  }, [tourSeenKey]);
+
+  useEffect(() => {
+    if (!userRole || window.localStorage.getItem(tourSeenKey)) return;
+    window.localStorage.setItem(tourSeenKey, '1');
+    setTourRun((run) => run + 1);
+  }, [tourSeenKey, userRole]);
 
   return (
     <div className="w-full h-screen flex bg-white text-[#1F221D] font-sans overflow-hidden select-none relative">
@@ -25,7 +43,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, headerTitle, heade
       {/* Full Page Main Workspace Container */}
       <div className="flex-1 flex flex-col min-w-0 h-full bg-white overflow-hidden relative">
         {/* Workspace Top Header (Full Page Header) */}
-        <Header title={headerTitle} breadcrumb={headerBreadcrumb} onMenuClick={toggleSidebar} />
+        <Header title={headerTitle} breadcrumb={headerBreadcrumb} onMenuClick={toggleSidebar} onTakeTour={startTour} />
 
         {/* Dynamic Screen View Content */}
         <main className="flex-1 flex flex-col overflow-hidden relative bg-white">
@@ -38,6 +56,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, headerTitle, heade
 
       {/* Toast Notification System */}
       <Toast />
+      {tourRun > 0 && <GuidedTour key={tourRun} onClose={() => setTourRun(0)} />}
     </div>
   );
 };

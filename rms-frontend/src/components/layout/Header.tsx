@@ -1,16 +1,17 @@
 import React from 'react';
 import { useTime } from '../../hooks/useTime';
 import { useAppStore } from '../../store/useAppStore';
-import { Bell, Menu, Search, ShieldCheck } from 'lucide-react';
+import { Bell, Menu, Search, ShieldCheck, Compass } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 
 interface HeaderProps {
   title: string;
   breadcrumb?: string;
   onMenuClick?: () => void;
+  onTakeTour?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, breadcrumb, onMenuClick }) => {
+export const Header: React.FC<HeaderProps> = ({ title, breadcrumb, onMenuClick, onTakeTour }) => {
   const time = useTime();
   const notifications = useAppStore((state) => state.notifications);
   const userName = useAppStore((state) => state.userName);
@@ -60,6 +61,17 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumb, onMenuClick }
 
       {/* Right: Live Clock + System Status + Notifications + Avatar */}
       <div className="flex items-center gap-3.5 flex-shrink-0">
+        <button
+          type="button"
+          onClick={onTakeTour}
+          data-tour="take-tour"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-[#FF7A10]/25 bg-[#FFF2E8] px-2.5 py-2 text-xs font-bold text-[#E86000] transition-colors hover:bg-[#FFE6D5] sm:px-3"
+          title="Start the guided tour"
+        >
+          <Compass className="h-4 w-4" />
+          <span>Take tour</span>
+        </button>
+
         {/* Live System Status Pill */}
         <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#2E7D32]/10 border border-[#2E7D32]/20 text-[11px] font-extrabold text-[#2E7D32]">
           <ShieldCheck className="w-3.5 h-3.5" />
