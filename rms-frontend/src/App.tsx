@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useTableStore } from './store/useTableStore';
 import { useOrderStore } from './store/useOrderStore';
 import { useKitchenStore } from './store/useKitchenStore';
@@ -26,25 +26,58 @@ import { EmployeeFormScreen } from './screens/Employees/EmployeeFormScreen';
 import { RolesAccessScreen } from './screens/RolesAccess/RolesAccessScreen';
 import { AttendanceScreen } from './screens/Attendance/AttendanceScreen';
 import { GeofencingScreen } from './screens/Geofencing/GeofencingScreen';
+import { BusinessesScreen } from './screens/SuperAdmin/BusinessesScreen';
+import { DemoActivityScreen } from './screens/SuperAdmin/DemoActivityScreen';
+import { useAppStore } from './store/useAppStore';
+import { api } from './services/api';
+
+const DemoEntry: React.FC = () => {
+  const navigate = useNavigate();
+  const setUserRole = useAppStore((state) => state.setUserRole);
+  const [error, setError] = React.useState('');
+
+  useEffect(() => {
+    api.loginDemo()
+      .then((response) => {
+        setUserRole(response.account_type, response.permissions, response.token, response.name, response.role_name, false, true);
+        navigate('/dashboard', { replace: true });
+      })
+      .catch((loginError: unknown) => {
+        setError(loginError instanceof Error ? loginError.message : 'Unable to start the demo.');
+      });
+  }, [navigate, setUserRole]);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[#F7F5F2] text-[#1F221D]">
+      <p className="font-bold">{error || 'Starting your demo workspace…'}</p>
+      {error && <button onClick={() => navigate('/login')} className="text-sm font-bold text-[#FF7A10]">Return to login</button>}
+    </div>
+  );
+};
 
 export const App: React.FC = () => {
   const fetchTables = useTableStore((state) => state.fetchTables);
   const fetchMenuItems = useOrderStore((state) => state.fetchMenuItems);
   const fetchOrders = useOrderStore((state) => state.fetchOrders);
   const fetchKitchenOrders = useKitchenStore((state) => state.fetchKitchenOrders);
+  const userRole = useAppStore((state) => state.userRole);
+  const isSuperAdmin = useAppStore((state) => state.isSuperAdmin);
+  const permissions = useAppStore((state) => state.permissions);
 
   const location = useLocation();
 
   useEffect(() => {
-    if (location.pathname === '/login') return;
+    if (!userRole || isSuperAdmin || location.pathname === '/login' || location.pathname === '/demo') return;
 
-    fetchTables();
-    fetchMenuItems();
-    fetchOrders();
-    fetchKitchenOrders();
-  }, [location.pathname, fetchKitchenOrders, fetchMenuItems, fetchOrders, fetchTables]);
+    if (permissions.includes('tables.view')) fetchTables();
+    if (permissions.includes('menu.manage')) fetchMenuItems();
+    if (permissions.includes('orders.create')) fetchOrders();
+    if (permissions.includes('kitchen.view')) fetchKitchenOrders();
+  }, [location.pathname, fetchKitchenOrders, fetchMenuItems, fetchOrders, fetchTables, isSuperAdmin, permissions, userRole]);
 
   const isLogin = location.pathname === '/login';
+
+  if (location.pathname === '/demo') return <DemoEntry />;
 
   if (isLogin) {
     return (
@@ -54,6 +87,14 @@ export const App: React.FC = () => {
         </Routes>
       </div>
     );
+  }
+
+  if (!userRole) return <Navigate to="/login" replace />;
+  if (isSuperAdmin && !location.pathname.startsWith('/super-admin')) {
+    return <Navigate to="/super-admin/businesses" replace />;
+  }
+  if (!isSuperAdmin && location.pathname.startsWith('/super-admin')) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   // Find route metadata for title & breadcrumb
@@ -93,6 +134,8 @@ export const App: React.FC = () => {
         <Route path="/roles-access" element={<RolesAccessScreen />} />
         <Route path="/settings/business" element={<BusinessSettingsScreen />} />
         <Route path="/settings" element={<Navigate to="/settings/business" replace />} />
+        <Route path="/super-admin/businesses" element={<BusinessesScreen />} />
+        <Route path="/super-admin/demo-activity" element={<DemoActivityScreen />} />
       </Routes>
     </AppShell>
   );

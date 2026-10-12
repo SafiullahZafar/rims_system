@@ -10,6 +10,35 @@ interface LoginResponse {
   name: string;
   screen: string;
   permissions: string[];
+  account_type: 'business' | 'super_admin' | 'demo';
+  is_super_admin: boolean;
+  is_demo: boolean;
+}
+
+export interface ManagedBusiness {
+  id: number;
+  name: string;
+  slug: string;
+  is_active: boolean;
+  module_permissions: string[];
+  users: { id: number; name: string; email: string | null }[];
+  created_at: string;
+}
+
+export interface DemoActivity {
+  id: number;
+  name: string;
+  ip_address: string | null;
+  started_at: string;
+  last_seen_at: string;
+  logs_count: number;
+  logs: {
+    id: number;
+    method: string;
+    path: string;
+    ip_address: string | null;
+    created_at: string;
+  }[];
 }
 
 interface BackendMenuItem {
@@ -233,6 +262,35 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  loginDemo: () => request<LoginResponse>('/demo/login', { method: 'POST' }),
+
+  logout: () => {
+    const { isSuperAdmin } = useAppStore.getState();
+    return request<{ message: string }>(isSuperAdmin ? '/super-admin/logout' : '/logout', { method: 'POST' });
+  },
+
+  getManagedBusinesses: () => request<ManagedBusiness[]>('/super-admin/businesses'),
+  createManagedBusiness: (payload: {
+    business_name: string;
+    owner_name: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+    module_permissions: string[];
+  }) => request<{ message: string; business: Pick<ManagedBusiness, 'id' | 'name' | 'slug'>; owner: { name: string; email: string }; credentials: { email: string; password: string } }>('/super-admin/businesses', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+  setBusinessActive: (id: number, is_active: boolean) => request<{ message: string; is_active: boolean }>(`/super-admin/businesses/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ is_active }),
+  }),
+  setBusinessModules: (id: number, module_permissions: string[]) => request<{ message: string; module_permissions: string[] }>(`/super-admin/businesses/${id}/modules`, {
+    method: 'PUT',
+    body: JSON.stringify({ module_permissions }),
+  }),
+  getDemoActivity: () => request<DemoActivity[]>('/super-admin/demo-activity'),
 
   getMenuItems: async () => (await request<BackendMenuItem[]>('/menu-items')).map(mapMenuItem),
 

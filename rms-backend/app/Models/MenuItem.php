@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Model;
 
 class MenuItem extends Model
 {
+    use BelongsToBusiness;
+
     protected $fillable = [
+        'business_id',
         'name',
         'category',
         'price',

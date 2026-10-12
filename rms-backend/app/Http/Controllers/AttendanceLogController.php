@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AttendanceLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AttendanceLogController extends Controller
 {
@@ -50,7 +51,10 @@ class AttendanceLogController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'employee_id' => ['required', 'exists:employees,id'],
+            'employee_id' => [
+                'required',
+                Rule::exists('employees', 'id')->where('business_id', $request->user()->business_id),
+            ],
             'date'        => ['required', 'date'],
             'check_in'    => ['nullable', 'date_format:H:i'],
             'check_out'   => ['nullable', 'date_format:H:i'],
@@ -85,7 +89,10 @@ class AttendanceLogController extends Controller
     public function update(Request $request, AttendanceLog $attendance): JsonResponse
     {
         $data = $request->validate([
-            'employee_id' => ['sometimes', 'exists:employees,id'],
+            'employee_id' => [
+                'sometimes',
+                Rule::exists('employees', 'id')->where('business_id', $request->user()->business_id),
+            ],
             'date'        => ['sometimes', 'date'],
             'check_in'    => ['sometimes', 'nullable', 'date_format:H:i'],
             'check_out'   => ['sometimes', 'nullable', 'date_format:H:i'],

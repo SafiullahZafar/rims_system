@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
-    protected $fillable = ['name', 'phone', 'email', 'notes'];
+    use BelongsToBusiness;
+
+    protected $fillable = ['business_id', 'name', 'phone', 'email', 'notes'];
 }

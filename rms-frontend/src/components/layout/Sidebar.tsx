@@ -12,6 +12,8 @@ import { Avatar } from '../ui/Avatar';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { ROUTES_CONFIG, ROUTE_SECTIONS, hasPermission } from '../../constants/routesConfig';
+import { api } from '../../services/api';
+import { useToast } from '../../hooks/useToast';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -27,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const userName = useAppStore((state) => state.userName);
   const userRoleName = useAppStore((state) => state.userRoleName);
   const logout = useAppStore((state) => state.logout);
+  const toast = useToast();
 
   const kitchenOrdersCount = useKitchenStore((state) =>
     state.orders.filter((o) => o.status !== 'ready').length
@@ -177,9 +180,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
 
         <div className="flex items-center gap-2 relative">
           <button
-            onClick={() => {
-              logout();
-              navigate('/login');
+            onClick={async () => {
+              try {
+                await api.logout();
+              } catch (error) {
+                toast.error(error instanceof Error ? error.message : 'Could not revoke the session token.');
+              } finally {
+                logout();
+                navigate('/login', { replace: true });
+              }
             }}
             className="w-full flex items-center justify-center p-2 rounded-xl text-[#C62828] bg-[#C62828]/10 border border-[#C62828]/20 hover:bg-[#C62828]/20 transition-all cursor-pointer gap-2 text-xs font-bold uppercase tracking-wider"
           >

@@ -17,6 +17,8 @@ import {
   ShieldAlert,
   LayoutGrid,
   Settings,
+  Building2,
+  Activity,
   LucideIcon,
 } from 'lucide-react';
 
@@ -24,7 +26,7 @@ export interface RouteConfig {
   id: string;
   path: string;
   label: string;
-  section: 'Overview' | 'POS Operations' | 'Catalog & CRM' | 'Inventory' | 'People' | 'Analytics' | 'Administration';
+  section: 'Overview' | 'POS Operations' | 'Catalog & CRM' | 'Inventory' | 'People' | 'Analytics' | 'Administration' | 'Super Admin';
   icon: LucideIcon;
   permission: string;
   breadcrumb: string;
@@ -42,6 +44,7 @@ export const ROUTE_SECTIONS = [
   'People',
   'Analytics',
   'Administration',
+  'Super Admin',
 ] as const;
 
 export const ROUTES_CONFIG: RouteConfig[] = [
@@ -191,7 +194,7 @@ export const ROUTES_CONFIG: RouteConfig[] = [
   {
     id: '/reports',
     path: '/reports',
-    label: 'Reports',
+    label: 'Reports & Expenses',
     section: 'Analytics',
     icon: BarChart2,
     permission: 'reports.view',
@@ -240,10 +243,31 @@ export const ROUTES_CONFIG: RouteConfig[] = [
     title: 'Business Profile & Settings',
     breadcrumb: 'Administration / Business Settings',
   },
+  {
+    id: '/super-admin/businesses',
+    path: '/super-admin/businesses',
+    label: 'Business Accounts',
+    section: 'Super Admin',
+    icon: Building2,
+    permission: 'super_admin',
+    title: 'Business Accounts',
+    breadcrumb: 'Super Admin / Business Accounts',
+  },
+  {
+    id: '/super-admin/demo-activity',
+    path: '/super-admin/demo-activity',
+    label: 'Demo Activity',
+    section: 'Super Admin',
+    icon: Activity,
+    permission: 'super_admin',
+    title: 'Demo Activity',
+    breadcrumb: 'Super Admin / Demo Activity',
+  },
 ];
 
 export function hasPermission(userPermissions: string[], reqPermission: string, path: string): boolean {
-  if (!userPermissions || userPermissions.length === 0) return true; // Default fallback for open access if not configured
+  if (userPermissions.includes('super_admin')) return reqPermission === 'super_admin';
+  if (!userPermissions || userPermissions.length === 0) return false;
   if (userPermissions.includes('/admin') || userPermissions.includes('admin')) return true;
   if (userPermissions.includes(path)) return true;
   if (userPermissions.includes(reqPermission)) return true;

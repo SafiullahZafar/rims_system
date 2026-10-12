@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Supply extends Model
 {
+    use BelongsToBusiness;
+
     protected $fillable = [
+        'business_id',
         'name', 'unit', 'quantity', 'min_quantity',
         'unit_cost', 'supplier', 'category', 'notes', 'is_active',
     ];

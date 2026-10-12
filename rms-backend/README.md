@@ -9,6 +9,14 @@
 
 ## About Laravel
 
+## RIMS business accounts and demo
+
+Set `SUPER_ADMIN` (or `super_admin`) in the backend environment, then run `php artisan migrate --seed`. Enter that configured username in the admin login field to enter the super-admin area; it does not use an email or password. The username is the authorization key and should be kept private.
+
+Set only `SUPER_ADMIN` in the backend environment. Register the user with that name through the normal account flow, then run `php artisan db:seed`; the seeder promotes the matching database account without replacing its email or password. Sign in using the account's registered email and password. Restaurant data is scoped to each owner's business.
+
+The public demo is available at `/demo`. It uses a shared demo business, requires no password, and is separate from all owner businesses. Actions made by demo visitors are recorded in the super-admin Demo Activity page only.
+
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
 - [Simple, fast routing engine](https://laravel.com/docs/routing).

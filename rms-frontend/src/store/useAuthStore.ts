@@ -6,7 +6,16 @@ type UserRole = 'staff' | 'admin' | 'kitchen';
 interface AuthState {
   loginError: string;
   isLoggingIn: boolean;
-  login: (type: 'admin' | 'employee', credentials: { pin?: string; email?: string; password?: string }) => Promise<{ screen: string; permissions: string[]; token: string; name: string; role_name: string; } | null>;
+  login: (type: 'admin' | 'employee', credentials: { pin?: string; email?: string; password?: string }) => Promise<{
+    screen: string;
+    permissions: string[];
+    token: string;
+    name: string;
+    role_name: string;
+    account_type: 'business' | 'super_admin' | 'demo';
+    is_super_admin: boolean;
+    is_demo: boolean;
+  } | null>;
   clearError: () => void;
 }
 
@@ -18,7 +27,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const result = await api.login({ type, ...credentials });
       set({ isLoggingIn: false, loginError: '' });
-      return { screen: result.screen, permissions: result.permissions, token: result.token, name: result.name, role_name: result.role_name };
+      return {
+        screen: result.screen,
+        permissions: result.permissions,
+        token: result.token,
+        name: result.name,
+        role_name: result.role_name,
+        account_type: result.account_type,
+        is_super_admin: result.is_super_admin,
+        is_demo: result.is_demo,
+      };
     } catch (error) {
       set({
         isLoggingIn: false,

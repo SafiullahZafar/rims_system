@@ -9,6 +9,8 @@ import {
   Users,
   MapPin,
   Settings,
+  Building2,
+  Activity,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -20,8 +22,9 @@ export const MobileNav: React.FC = () => {
   const location = useLocation();
   const activePath = location.pathname;
   const permissions = useAppStore((state) => state.permissions);
+  const isSuperAdmin = useAppStore((state) => state.isSuperAdmin);
 
-  const mobileItems = [
+  const businessItems = [
     { path: '/dashboard', label: 'Home', icon: LayoutDashboard, perm: 'dashboard.view' },
     { path: '/tables', label: 'Tables', icon: Grid, perm: 'tables.view' },
     { path: '/order', label: 'Order', icon: PlusCircle, perm: 'orders.create', isSpecial: true },
@@ -30,7 +33,15 @@ export const MobileNav: React.FC = () => {
     { path: '/employees', label: 'Staff', icon: Users, perm: 'employees.view' },
     { path: '/geofencing', label: 'Geofence', icon: MapPin, perm: 'geofencing.view' },
     { path: '/settings/business', label: 'Settings', icon: Settings, perm: 'business_settings.manage' },
-  ].filter((item) => hasPermission(permissions, item.perm, item.path));
+  ];
+
+  const superAdminItems = [
+    { path: '/super-admin/businesses', label: 'Accounts', icon: Building2, perm: 'super_admin', isSpecial: false },
+    { path: '/super-admin/demo-activity', label: 'Demo log', icon: Activity, perm: 'super_admin', isSpecial: false },
+  ];
+
+  const mobileItems = (isSuperAdmin ? superAdminItems : businessItems)
+    .filter((item) => hasPermission(permissions, item.perm, item.path));
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[#E9E5E1] px-2 flex items-center justify-around z-40 select-none shadow-lg">

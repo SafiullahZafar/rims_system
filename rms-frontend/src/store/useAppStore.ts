@@ -14,7 +14,9 @@ interface AppState {
   userRole: UserRole | null;
   userName: string | null;
   userRoleName: string | null;
-  setUserRole: (role: UserRole, permissions?: string[], token?: string, userName?: string, userRoleName?: string) => void;
+  isSuperAdmin: boolean;
+  isDemo: boolean;
+  setUserRole: (role: UserRole, permissions?: string[], token?: string, userName?: string, userRoleName?: string, isSuperAdmin?: boolean, isDemo?: boolean) => void;
 
   activeScreen: Screen;
   sidebarCollapsed: boolean;
@@ -43,6 +45,8 @@ interface StoredSession {
   token: string | null;
   userName: string | null;
   userRoleName: string | null;
+  isSuperAdmin: boolean;
+  isDemo: boolean;
 }
 
 const SESSION_KEY = 'rms_session';
@@ -77,6 +81,8 @@ const readStoredSession = (): StoredSession | null => {
       token: session.token ?? null,
       userName: session.userName ?? null,
       userRoleName: session.userRoleName ?? null,
+      isSuperAdmin: session.isSuperAdmin ?? false,
+      isDemo: session.isDemo ?? false,
     };
   } catch {
     return null;
@@ -109,10 +115,12 @@ export const useAppStore = create<AppState>((set) => ({
   userRole: storedSession?.userRole ?? null,
   userName: storedSession?.userName ?? null,
   userRoleName: storedSession?.userRoleName ?? null,
+  isSuperAdmin: storedSession?.isSuperAdmin ?? false,
+  isDemo: storedSession?.isDemo ?? false,
   permissions: storedSession?.permissions ?? [],
   token: storedSession?.token ?? null,
 
-  setUserRole: (role, permissions = [], token, userName, userRoleName) => {
+  setUserRole: (role, permissions = [], token, userName, userRoleName, isSuperAdmin = false, isDemo = false) => {
     const session: StoredSession = {
       userRole: role,
       activeScreen: defaultScreenForRole(role),
@@ -120,9 +128,11 @@ export const useAppStore = create<AppState>((set) => ({
       token: token ?? null,
       userName: userName ?? null,
       userRoleName: userRoleName ?? null,
+      isSuperAdmin,
+      isDemo,
     };
     writeStoredSession(session);
-    set({ userRole: role, permissions, token: token ?? null, userName: userName ?? null, userRoleName: userRoleName ?? null });
+    set({ userRole: role, permissions, token: token ?? null, userName: userName ?? null, userRoleName: userRoleName ?? null, isSuperAdmin, isDemo });
   },
 
   setPermissions: (permissions) => {
@@ -142,6 +152,8 @@ export const useAppStore = create<AppState>((set) => ({
           userRole: null,
           userName: null,
           userRoleName: null,
+          isSuperAdmin: false,
+          isDemo: false,
           selectedTableId: null,
           token: null,
           permissions: [],
@@ -156,6 +168,8 @@ export const useAppStore = create<AppState>((set) => ({
           token: state.token,
           userName: state.userName,
           userRoleName: state.userRoleName,
+          isSuperAdmin: state.isSuperAdmin,
+          isDemo: state.isDemo,
         });
       }
 
@@ -169,6 +183,8 @@ export const useAppStore = create<AppState>((set) => ({
       userRole: null,
       userName: null,
       userRoleName: null,
+      isSuperAdmin: false,
+      isDemo: false,
       selectedTableId: null,
       notifications: [],
       permissions: [],

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\LoginCredential;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
@@ -14,8 +14,8 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'type' => ['required', Rule::in(['admin', 'employee'])],
             'pin' => ['nullable', 'string'],
-            'email' => ['nullable', 'string'],
-            'password' => ['nullable', 'string'],
+            'email' => ['nullable', 'string', 'required_if:type,admin'],
+            'password' => ['nullable', 'string', 'required_if:type,admin'],
         ]);
 
         $login = LoginCredential::attempt($credentials);
@@ -36,6 +36,16 @@ class AuthController extends Controller
             'name' => $login['name'],
             'screen' => $login['screen'],
             'permissions' => $login['permissions'],
+            'account_type' => $login['account_type'],
+            'is_super_admin' => $login['is_super_admin'],
+            'is_demo' => false,
         ]);
+    }
+
+    public function logout(Request $request): JsonResponse
+    {
+        $request->user()->currentAccessToken()?->delete();
+
+        return response()->json(['message' => 'Logged out.']);
     }
 }

@@ -18,7 +18,12 @@ class CustomerController extends Controller
     {
         $data = $request->validate([
             'name'  => ['required', 'string', 'max:100'],
-            'phone' => ['nullable', 'string', 'max:20', Rule::unique('customers', 'phone')],
+            'phone' => [
+                'nullable',
+                'string',
+                'max:20',
+                Rule::unique('customers', 'phone')->where('business_id', $request->user()->business_id),
+            ],
             'email' => ['nullable', 'email'],
             'notes' => ['nullable', 'string'],
         ]);
@@ -32,7 +37,15 @@ class CustomerController extends Controller
     {
         $data = $request->validate([
             'name'  => ['sometimes', 'required', 'string', 'max:100'],
-            'phone' => ['sometimes', 'nullable', 'string', 'max:20', Rule::unique('customers', 'phone')->ignore($customer->id)],
+            'phone' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:20',
+                Rule::unique('customers', 'phone')
+                    ->where('business_id', $request->user()->business_id)
+                    ->ignore($customer->id),
+            ],
             'email' => ['sometimes', 'nullable', 'email'],
             'notes' => ['sometimes', 'nullable', 'string'],
         ]);

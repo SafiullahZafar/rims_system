@@ -35,10 +35,16 @@ class OrderController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'restaurant_table_id' => ['nullable', 'exists:restaurant_tables,id'],
+            'restaurant_table_id' => [
+                'nullable',
+                Rule::exists('restaurant_tables', 'id')->where('business_id', $request->user()->business_id),
+            ],
             'order_type' => ['required', Rule::in(['dine-in', 'takeaway', 'delivery'])],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.menu_item_id' => ['required', 'exists:menu_items,id'],
+            'items.*.menu_item_id' => [
+                'required',
+                Rule::exists('menu_items', 'id')->where('business_id', $request->user()->business_id),
+            ],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
         ]);
 

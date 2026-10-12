@@ -3,36 +3,41 @@
 namespace App\Policies;
 
 use App\Models\Employee;
+use App\Models\DemoVisitor;
 
 class EmployeePolicy
 {
-    public function viewAny(Employee $employee): bool
+    public function viewAny(Employee|DemoVisitor $employee): bool
     {
         return $this->canManageSettings($employee);
     }
 
-    public function view(Employee $employee): bool
+    public function view(Employee|DemoVisitor $employee): bool
     {
         return $this->canManageSettings($employee);
     }
 
-    public function create(Employee $employee): bool
+    public function create(Employee|DemoVisitor $employee): bool
     {
         return $this->canManageSettings($employee);
     }
 
-    public function update(Employee $employee): bool
+    public function update(Employee|DemoVisitor $employee): bool
     {
         return $this->canManageSettings($employee);
     }
 
-    public function delete(Employee $employee): bool
+    public function delete(Employee|DemoVisitor $employee): bool
     {
         return $this->canManageSettings($employee);
     }
 
-    private function canManageSettings(Employee $employee): bool
+    private function canManageSettings(Employee|DemoVisitor $employee): bool
     {
+        if ($employee instanceof DemoVisitor) {
+            return true;
+        }
+
         return in_array('/settings', $employee->role?->permissions ?? []);
     }
 }

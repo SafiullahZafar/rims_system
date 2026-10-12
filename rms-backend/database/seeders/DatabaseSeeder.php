@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\AttendanceLog;
+use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\Expense;
@@ -14,61 +15,72 @@ use App\Models\RestaurantTable;
 use App\Models\Role;
 use App\Models\Supply;
 use App\Models\SupplyLog;
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     public function run(): void
     {
+        $demoBusinessId = DB::table('businesses')->where('is_demo', true)->value('id');
+        if (! $demoBusinessId) {
+            throw new \RuntimeException('The demo business is missing. Run the business tenancy migration first.');
+        }
+        $this->seedDemoWorkspace((int) $demoBusinessId);
+        $this->seedConfiguredSuperAdmin();
+    }
+
+    private function seedDemoWorkspace(int $demoBusinessId): void
+    {
+
         // ── 1. Roles ───────────────────────────────────────────────────────────
         $allPermissions = ['/dashboard', '/tables', '/order', '/payment', '/kitchen', '/settings', '/employees', '/customers', '/reports', '/expenses', '/supplies'];
 
-        $adminRole    = Role::query()->firstOrCreate(['name' => 'Admin'],    ['permissions' => $allPermissions]);
-        $managerRole  = Role::query()->firstOrCreate(['name' => 'Manager'],  ['permissions' => ['/dashboard', '/tables', '/order', '/payment', '/kitchen', '/employees', '/customers', '/reports', '/expenses']]);
-        $cashierRole  = Role::query()->firstOrCreate(['name' => 'Cashier'],  ['permissions' => ['/order', '/payment', '/tables']]);
-        $waiterRole   = Role::query()->firstOrCreate(['name' => 'Waiter'],   ['permissions' => ['/tables', '/order', '/kitchen']]);
-        $kitchenRole  = Role::query()->firstOrCreate(['name' => 'Kitchen'],  ['permissions' => ['/kitchen']]);
+        $adminRole    = Role::query()->withoutGlobalScopes()->firstOrCreate(['business_id' => $demoBusinessId, 'name' => 'Admin'],    ['permissions' => $allPermissions]);
+        $managerRole  = Role::query()->withoutGlobalScopes()->firstOrCreate(['business_id' => $demoBusinessId, 'name' => 'Manager'],  ['permissions' => ['/dashboard', '/tables', '/order', '/payment', '/kitchen', '/employees', '/customers', '/reports', '/expenses']]);
+        $cashierRole  = Role::query()->withoutGlobalScopes()->firstOrCreate(['business_id' => $demoBusinessId, 'name' => 'Cashier'],  ['permissions' => ['/order', '/payment', '/tables']]);
+        $waiterRole   = Role::query()->withoutGlobalScopes()->firstOrCreate(['business_id' => $demoBusinessId, 'name' => 'Waiter'],   ['permissions' => ['/tables', '/order', '/kitchen']]);
+        $kitchenRole  = Role::query()->withoutGlobalScopes()->firstOrCreate(['business_id' => $demoBusinessId, 'name' => 'Kitchen'],  ['permissions' => ['/kitchen']]);
 
         // ── 2. Employees (18 total, including 1 admin) ──────────────────────────
         $employees = [
             // Admin
-            ['name' => 'Safullah Zafar',    'email' => 'safullahzafar@gmail.com', 'phone' => '+92-300-1234567', 'role_id' => $adminRole->id,   'pin' => null,   'password' => Hash::make('12345678'), 'is_active' => true],
+            ['name' => 'Demo Administrator', 'email' => 'admin@gmail.com', 'phone' => '+92-300-1234567', 'role_id' => $adminRole->id, 'pin' => null, 'password' => '12345678', 'is_active' => true],
             // Managers
-            ['name' => 'Ahmed Raza',        'email' => 'ahmed.raza@aura.com',     'phone' => '+92-321-2345678', 'role_id' => $managerRole->id,  'pin' => '2001', 'password' => Hash::make('manager01'), 'is_active' => true],
-            ['name' => 'Sara Malik',        'email' => 'sara.malik@aura.com',     'phone' => '+92-333-3456789', 'role_id' => $managerRole->id,  'pin' => '2002', 'password' => Hash::make('manager02'), 'is_active' => true],
+            ['name' => 'Ahmed Raza',        'email' => 'ahmed.raza@demo.aurapos.com',     'phone' => '+92-321-2345678', 'role_id' => $managerRole->id,  'pin' => '2001', 'password' => Hash::make('manager01'), 'is_active' => true],
+            ['name' => 'Sara Malik',        'email' => 'sara.malik@demo.aurapos.com',     'phone' => '+92-333-3456789', 'role_id' => $managerRole->id,  'pin' => '2002', 'password' => Hash::make('manager02'), 'is_active' => true],
             // Cashiers
-            ['name' => 'Bilal Hassan',      'email' => 'bilal.hassan@aura.com',   'phone' => '+92-345-4567890', 'role_id' => $cashierRole->id,  'pin' => '3001', 'password' => Hash::make('cashier01'), 'is_active' => true],
-            ['name' => 'Fatima Noor',       'email' => 'fatima.noor@aura.com',    'phone' => '+92-311-5678901', 'role_id' => $cashierRole->id,  'pin' => '3002', 'password' => Hash::make('cashier02'), 'is_active' => true],
+            ['name' => 'Bilal Hassan',      'email' => 'bilal.hassan@demo.aurapos.com',   'phone' => '+92-345-4567890', 'role_id' => $cashierRole->id,  'pin' => '3001', 'password' => Hash::make('cashier01'), 'is_active' => true],
+            ['name' => 'Fatima Noor',       'email' => 'fatima.noor@demo.aurapos.com',    'phone' => '+92-311-5678901', 'role_id' => $cashierRole->id,  'pin' => '3002', 'password' => Hash::make('cashier02'), 'is_active' => true],
             // Waiters
-            ['name' => 'Usman Tariq',       'email' => 'usman.tariq@aura.com',    'phone' => '+92-312-6789012', 'role_id' => $waiterRole->id,   'pin' => '4001', 'password' => Hash::make('waiter01'), 'is_active' => true],
-            ['name' => 'Aisha Khan',        'email' => 'aisha.khan@aura.com',     'phone' => '+92-313-7890123', 'role_id' => $waiterRole->id,   'pin' => '4002', 'password' => Hash::make('waiter02'), 'is_active' => true],
-            ['name' => 'Hamza Sheikh',      'email' => 'hamza.sheikh@aura.com',   'phone' => '+92-314-8901234', 'role_id' => $waiterRole->id,   'pin' => '4003', 'password' => Hash::make('waiter03'), 'is_active' => true],
-            ['name' => 'Zara Ahmad',        'email' => 'zara.ahmad@aura.com',     'phone' => '+92-315-9012345', 'role_id' => $waiterRole->id,   'pin' => '4004', 'password' => Hash::make('waiter04'), 'is_active' => true],
-            ['name' => 'Danish Ali',        'email' => 'danish.ali@aura.com',     'phone' => '+92-316-0123456', 'role_id' => $waiterRole->id,   'pin' => '4005', 'password' => Hash::make('waiter05'), 'is_active' => true],
-            ['name' => 'Sana Butt',         'email' => 'sana.butt@aura.com',      'phone' => '+92-317-1234567', 'role_id' => $waiterRole->id,   'pin' => '4006', 'password' => Hash::make('waiter06'), 'is_active' => true],
+            ['name' => 'Usman Tariq',       'email' => 'usman.tariq@demo.aurapos.com',    'phone' => '+92-312-6789012', 'role_id' => $waiterRole->id,   'pin' => '4001', 'password' => Hash::make('waiter01'), 'is_active' => true],
+            ['name' => 'Aisha Khan',        'email' => 'aisha.khan@demo.aurapos.com',    'phone' => '+92-313-7890123', 'role_id' => $waiterRole->id,   'pin' => '4002', 'password' => Hash::make('waiter02'), 'is_active' => true],
+            ['name' => 'Hamza Sheikh',      'email' => 'hamza.sheikh@demo.aurapos.com',  'phone' => '+92-314-8901234', 'role_id' => $waiterRole->id,   'pin' => '4003', 'password' => Hash::make('waiter03'), 'is_active' => true],
+            ['name' => 'Zara Ahmad',        'email' => 'zara.ahmad@demo.aurapos.com',    'phone' => '+92-315-9012345', 'role_id' => $waiterRole->id,   'pin' => '4004', 'password' => Hash::make('waiter04'), 'is_active' => true],
+            ['name' => 'Danish Ali',        'email' => 'danish.ali@demo.aurapos.com',    'phone' => '+92-316-0123456', 'role_id' => $waiterRole->id,   'pin' => '4005', 'password' => Hash::make('waiter05'), 'is_active' => true],
+            ['name' => 'Sana Butt',         'email' => 'sana.butt@demo.aurapos.com',     'phone' => '+92-317-1234567', 'role_id' => $waiterRole->id,   'pin' => '4006', 'password' => Hash::make('waiter06'), 'is_active' => true],
             // Kitchen Staff
-            ['name' => 'Rizwan Chef',       'email' => 'rizwan.chef@aura.com',    'phone' => '+92-318-2345678', 'role_id' => $kitchenRole->id,  'pin' => '5001', 'password' => Hash::make('kitchen01'), 'is_active' => true],
-            ['name' => 'Kamran Cook',       'email' => 'kamran.cook@aura.com',    'phone' => '+92-319-3456789', 'role_id' => $kitchenRole->id,  'pin' => '5002', 'password' => Hash::make('kitchen02'), 'is_active' => true],
-            ['name' => 'Imran Grill',       'email' => 'imran.grill@aura.com',    'phone' => '+92-320-4567890', 'role_id' => $kitchenRole->id,  'pin' => '5003', 'password' => Hash::make('kitchen03'), 'is_active' => true],
-            ['name' => 'Nadia Baker',       'email' => 'nadia.baker@aura.com',    'phone' => '+92-331-5678901', 'role_id' => $kitchenRole->id,  'pin' => '5004', 'password' => Hash::make('kitchen04'), 'is_active' => true],
+            ['name' => 'Rizwan Chef',       'email' => 'rizwan.chef@demo.aurapos.com',    'phone' => '+92-318-2345678', 'role_id' => $kitchenRole->id,  'pin' => '5001', 'password' => Hash::make('kitchen01'), 'is_active' => true],
+            ['name' => 'Kamran Cook',       'email' => 'kamran.cook@demo.aurapos.com',    'phone' => '+92-319-3456789', 'role_id' => $kitchenRole->id,  'pin' => '5002', 'password' => Hash::make('kitchen02'), 'is_active' => true],
+            ['name' => 'Imran Grill',       'email' => 'imran.grill@demo.aurapos.com',    'phone' => '+92-320-4567890', 'role_id' => $kitchenRole->id,  'pin' => '5003', 'password' => Hash::make('kitchen03'), 'is_active' => true],
+            ['name' => 'Nadia Baker',       'email' => 'nadia.baker@demo.aurapos.com',    'phone' => '+92-331-5678901', 'role_id' => $kitchenRole->id,  'pin' => '5004', 'password' => Hash::make('kitchen04'), 'is_active' => true],
             // Inactive / former staff
-            ['name' => 'Omar Farooq',       'email' => 'omar.farooq@aura.com',    'phone' => '+92-332-6789012', 'role_id' => $waiterRole->id,   'pin' => '4007', 'password' => Hash::make('waiter07'), 'is_active' => false],
-            ['name' => 'Hira Shahid',       'email' => 'hira.shahid@aura.com',    'phone' => '+92-333-7890123', 'role_id' => $cashierRole->id,  'pin' => '3003', 'password' => Hash::make('cashier03'), 'is_active' => false],
-            ['name' => 'Tariq Mehmood',     'email' => 'tariq.mehmood@aura.com',  'phone' => '+92-334-8901234', 'role_id' => $waiterRole->id,   'pin' => '4008', 'password' => Hash::make('waiter08'), 'is_active' => false],
+            ['name' => 'Omar Farooq',       'email' => 'omar.farooq@demo.aurapos.com',    'phone' => '+92-332-6789012', 'role_id' => $waiterRole->id,   'pin' => '4007', 'password' => Hash::make('waiter07'), 'is_active' => false],
+            ['name' => 'Hira Shahid',       'email' => 'hira.shahid@demo.aurapos.com',    'phone' => '+92-333-7890123', 'role_id' => $cashierRole->id,  'pin' => '3003', 'password' => Hash::make('cashier03'), 'is_active' => false],
+            ['name' => 'Tariq Mehmood',     'email' => 'tariq.mehmood@demo.aurapos.com',  'phone' => '+92-334-8901234', 'role_id' => $waiterRole->id,   'pin' => '4008', 'password' => Hash::make('waiter08'), 'is_active' => false],
         ];
 
         foreach ($employees as $emp) {
-            Employee::query()->updateOrCreate(['email' => $emp['email']], $emp);
+            $emp['business_id'] = $demoBusinessId;
+            Employee::query()->withoutGlobalScopes()->updateOrCreate(
+                ['business_id' => $demoBusinessId, 'email' => $emp['email']],
+                $emp
+            );
         }
 
         // Fetch all employees for later use
-        $allEmployees = Employee::query()->where('is_active', true)->get();
+        $allEmployees = Employee::query()->where('business_id', $demoBusinessId)->where('is_active', true)->get();
 
         // ── 3. Restaurant Tables (12 tables) ────────────────────────────────────
         $tables = [
@@ -85,8 +97,13 @@ class DatabaseSeeder extends Seeder
             ['id' => 11, 'seats' => 2,  'section' => 'D', 'status' => 'occupied', 'current_order_code' => 'O004', 'amount' => 12.00, 'duration' => 15],
             ['id' => 12, 'seats' => 8,  'section' => 'D', 'status' => 'available'],
         ];
+        $tableIds = [];
         foreach ($tables as $table) {
-            RestaurantTable::query()->updateOrCreate(['id' => $table['id']], $table);
+            $tableNumber = $table['id'];
+            unset($table['id']);
+            $table['table_number'] = $tableNumber;
+            $seededTable = RestaurantTable::query()->withoutGlobalScopes()->updateOrCreate(['business_id' => $demoBusinessId, 'table_number' => $tableNumber], $table + ['business_id' => $demoBusinessId]);
+            $tableIds[$tableNumber] = $seededTable->id;
         }
 
         // ── 4. Menu Items (17 items, already seeded — keep them) ────────────────
@@ -110,7 +127,8 @@ class DatabaseSeeder extends Seeder
             ['id' => 17, 'name' => 'Tiramisu Cup',             'category' => 'Desserts',  'price' => 7.20,  'emoji' => 'coffee',  'prep_time' => '6 min',  'popular' => true,  'description' => 'Coffee-soaked dessert with mascarpone.',                             'image' => 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?q=80&w=600&auto=format&fit=crop'],
         ];
         foreach ($menuItems as $item) {
-            MenuItem::query()->updateOrCreate(['id' => $item['id']], $item);
+            unset($item['id']);
+            MenuItem::query()->withoutGlobalScopes()->updateOrCreate(['business_id' => $demoBusinessId, 'name' => $item['name']], $item + ['business_id' => $demoBusinessId]);
         }
 
         // ── 5. Customers (15 records) ────────────────────────────────────────────
@@ -132,7 +150,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Waseem Aktar',     'phone' => '+92-300-1515015', 'email' => 'waseem.aktar@gmail.com',   'notes' => 'Prefers high table area.'],
         ];
         foreach ($customers as $cust) {
-            Customer::query()->firstOrCreate(['phone' => $cust['phone']], $cust);
+            Customer::query()->withoutGlobalScopes()->firstOrCreate(['business_id' => $demoBusinessId, 'phone' => $cust['phone']], $cust + ['business_id' => $demoBusinessId]);
         }
 
         // ── 6. Orders (20 completed + 4 active) ─────────────────────────────────
@@ -161,9 +179,12 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($completedOrders as $order) {
-            $existing = Order::query()->where('code', $order['code'])->first();
+            $existing = Order::query()->withoutGlobalScopes()->where('business_id', $demoBusinessId)->where('code', $order['code'])->first();
             if (!$existing) {
-                Order::query()->create($order);
+                if ($order['restaurant_table_id'] !== null) {
+                    $order['restaurant_table_id'] = $tableIds[$order['restaurant_table_id']];
+                }
+                Order::query()->create($order + ['business_id' => $demoBusinessId]);
             }
         }
 
@@ -191,9 +212,9 @@ class DatabaseSeeder extends Seeder
             ['title' => 'Dairy & Eggs',            'amount' => 140.00,  'category' => 'Supplies',  'date' => now()->subDays(6)->toDateString(),  'notes' => 'Milk, cream, eggs, cheese.'],
         ];
         foreach ($expenses as $exp) {
-            Expense::query()->firstOrCreate(
-                ['title' => $exp['title'], 'date' => $exp['date']],
-                $exp
+            Expense::query()->withoutGlobalScopes()->firstOrCreate(
+                ['business_id' => $demoBusinessId, 'title' => $exp['title'], 'date' => $exp['date']],
+                $exp + ['business_id' => $demoBusinessId]
             );
         }
 
@@ -222,10 +243,11 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($supplies as $supply) {
-            $existing = Supply::query()->firstOrCreate(['name' => $supply['name']], $supply);
+            $existing = Supply::query()->withoutGlobalScopes()->firstOrCreate(['business_id' => $demoBusinessId, 'name' => $supply['name']], $supply + ['business_id' => $demoBusinessId]);
             // Add a purchase log entry if new
             if ($existing->wasRecentlyCreated) {
                 SupplyLog::query()->create([
+                    'business_id' => $demoBusinessId,
                     'supply_id' => $existing->id,
                     'type'      => 'purchase',
                     'quantity'  => $supply['quantity'],
@@ -237,7 +259,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // ── 9. Attendance Logs (last 10 days for active employees) ──────────────
-        $activeEmployeeIds = Employee::query()->where('is_active', true)->pluck('id');
+        $activeEmployeeIds = Employee::query()->where('business_id', $demoBusinessId)->where('is_active', true)->pluck('id');
         $statuses   = ['present', 'present', 'present', 'present', 'late', 'late', 'absent', 'half-day'];
         $checkIns   = ['08:00', '08:05', '08:15', '08:30', '09:00', '09:15', '08:45', '08:00'];
 
@@ -252,15 +274,38 @@ class DatabaseSeeder extends Seeder
                 $checkIn  = $status === 'absent' ? null : $checkIns[$idx];
                 $checkOut = ($status === 'absent') ? null : (($status === 'half-day') ? date('H:i', strtotime($checkIn) + 4 * 3600) : date('H:i', strtotime($checkIn) + 8 * 3600));
 
-                AttendanceLog::query()->updateOrCreate(
-                    ['employee_id' => $empId, 'date' => $date],
+                AttendanceLog::query()->withoutGlobalScopes()->updateOrCreate(
+                    ['business_id' => $demoBusinessId, 'employee_id' => $empId, 'date' => $date],
                     [
+                        'business_id' => $demoBusinessId,
                         'check_in'  => $checkIn,
                         'check_out' => $checkOut,
                         'status'    => $status,
                         'notes'     => $status === 'late' ? 'Arrived late.' : null,
                     ]
                 );
+            }
+        }
+
+    }
+
+    private function seedConfiguredSuperAdmin(): void
+    {
+        $superAdminUsername = strtolower(trim((string) config('rims.super_admin')));
+        if ($superAdminUsername !== '') {
+            $superAdmin = Employee::query()->withoutGlobalScopes()
+                ->where(fn ($query) => $query->where('username', $superAdminUsername)->orWhereRaw('LOWER(name) = ?', [$superAdminUsername]))
+                ->first();
+
+            if ($superAdmin) {
+                $superAdmin->username = $superAdminUsername;
+                $superAdmin->role_id = null;
+                $superAdmin->pin = null;
+                $superAdmin->is_active = true;
+                $superAdmin->is_super_admin = true;
+                $superAdmin->is_demo_user = false;
+                $superAdmin->business_id = null;
+                $superAdmin->save();
             }
         }
     }

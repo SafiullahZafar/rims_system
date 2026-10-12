@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Role;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class RoleController extends Controller
 {
@@ -46,7 +47,14 @@ class RoleController extends Controller
     private function validated(Request $request, ?Role $role = null): array
     {
         return $request->validate([
-            'name' => [$role ? 'sometimes' : 'required', 'string', 'max:255', 'unique:roles,name' . ($role ? ',' . $role->id : '')],
+            'name' => [
+                $role ? 'sometimes' : 'required',
+                'string',
+                'max:255',
+                Rule::unique('roles', 'name')
+                    ->where('business_id', $request->user()->business_id)
+                    ->ignore($role?->id),
+            ],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string'],
         ]);

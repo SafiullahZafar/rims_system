@@ -16,19 +16,19 @@ import {
   CheckCircle2,
   ArrowRight,
   Delete,
-  Zap,
-  KeyRound,
 } from 'lucide-react';
 import { gsap } from 'gsap';
 
 type LoginRole = 'admin' | 'employee';
+const SUPER_ADMIN_NAME = (import.meta.env.VITE_SUPER_ADMIN_NAME ?? '').trim().toLowerCase();
 
 export const LoginScreen: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState<LoginRole>('admin');
   const [pin, setPin] = useState('');
-  const [adminEmail, setAdminEmail] = useState('safullahzafar@gmail.com');
-  const [adminPassword, setAdminPassword] = useState('123456');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   const navigate = useNavigate();
   const setUserRole = useAppStore((state) => state.setUserRole);
@@ -52,12 +52,13 @@ export const LoginScreen: React.FC = () => {
 
   const handleSignIn = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    setLoginError('');
     if (selectedRole === 'employee' && pin.length < 4) {
       toast.error('Please enter your 4-digit shift PIN.');
       return;
     }
     if (selectedRole === 'admin' && (!adminEmail || !adminPassword)) {
-      toast.error('Please enter admin email and password.');
+      setLoginError('Enter your account email and password.');
       return;
     }
 
@@ -67,28 +68,15 @@ export const LoginScreen: React.FC = () => {
     );
 
     if (response) {
-      setUserRole(selectedRole, response.permissions, response.token, response.name, response.role_name);
+      setUserRole(response.account_type, response.permissions, response.token, response.name, response.role_name, response.is_super_admin, response.is_demo);
       toast.success(`${selectedRole === 'admin' ? 'Administrator' : 'Staff'} Signed In Successfully!`);
       const finalScreen = response.screen === 'staff' ? 'tables' : response.screen;
       navigate('/' + finalScreen);
     } else {
-      toast.error(selectedRole === 'admin' ? 'Invalid admin email or password.' : 'Invalid shift PIN.');
+      const serverError = useAuthStore.getState().loginError;
+      setLoginError(serverError || (selectedRole === 'admin' ? 'Invalid email or password.' : 'Invalid shift PIN.'));
       setPin('');
     }
-  };
-
-  // Quick 1-click Demo Fill
-  const fillDemoAdmin = () => {
-    setSelectedRole('admin');
-    setAdminEmail('admin@aurapos.com');
-    setAdminPassword('admin123');
-    toast.info('Loaded Demo Admin credentials.');
-  };
-
-  const fillDemoEmployee = () => {
-    setSelectedRole('employee');
-    setPin('1234');
-    toast.info('Loaded Demo Staff PIN (1234).');
   };
 
   return (
@@ -234,24 +222,30 @@ export const LoginScreen: React.FC = () => {
           </div>
 
           {/* FORM */}
+          {loginError && (
+            <p className="w-full mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700" role="alert" aria-live="polite">
+              {loginError}
+            </p>
+          )}
           <form ref={formRef} onSubmit={handleSignIn} className="w-full space-y-4">
             {selectedRole === 'admin' ? (
               <div className="space-y-3.5">
                 <div>
                   <label className="text-xs font-bold text-[#666A64] uppercase tracking-wider mb-1 block">
-                    Admin Email
+                    Email
                   </label>
                   <div className="relative flex items-center">
                     <Mail className="w-4 h-4 absolute left-3.5 text-[#666A64]" />
                     <input
-                      type="email"
+                      type="text"
                       value={adminEmail}
-                      onChange={(e) => setAdminEmail(e.target.value)}
+                      onChange={(e) => { setAdminEmail(e.target.value); setLoginError(''); }}
                       required
-                      placeholder="admin@aurapos.com"
+                      placeholder="Enter your account email"
                       className="w-full bg-[#F7F5F2] border border-[#E9E5E1] rounded-xl pl-10 pr-4 py-3 text-xs text-[#1F221D] outline-none focus:border-[#FF7A10] focus:bg-white transition-all"
                     />
                   </div>
+                  {SUPER_ADMIN_NAME && <p className="mt-1.5 text-[11px] text-[#666A64]">Super admin access is assigned to the configured account.</p>}
                 </div>
 
                 <div>
@@ -263,7 +257,7 @@ export const LoginScreen: React.FC = () => {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={adminPassword}
-                      onChange={(e) => setAdminPassword(e.target.value)}
+                      onChange={(e) => { setAdminPassword(e.target.value); setLoginError(''); }}
                       required
                       placeholder="••••••••"
                       className="w-full bg-[#F7F5F2] border border-[#E9E5E1] rounded-xl pl-10 pr-10 py-3 text-xs text-[#1F221D] outline-none focus:border-[#FF7A10] focus:bg-white transition-all"
@@ -342,27 +336,17 @@ export const LoginScreen: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Demo Fill Buttons (Lucide SVG Icons) */}
-          <div className="w-full mt-6 pt-4 border-t border-[#E9E5E1] flex flex-col gap-2">
-            <span className="text-[10px] font-extrabold text-[#666A64] uppercase tracking-wider text-center">
-              Fast Demo Testing
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={fillDemoAdmin}
-                className="flex-1 py-2 px-3 rounded-xl bg-[#F7F5F2] hover:bg-[#FFF2E8] border border-[#E9E5E1] hover:border-[#FF7A10]/30 text-[11px] font-bold text-[#1F221D] transition-all cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                <Zap className="w-3.5 h-3.5 text-[#FF7A10]" /> Fill Demo Admin
-              </button>
-              <button
-                type="button"
-                onClick={fillDemoEmployee}
-                className="flex-1 py-2 px-3 rounded-xl bg-[#F7F5F2] hover:bg-[#FFF2E8] border border-[#E9E5E1] hover:border-[#FF7A10]/30 text-[11px] font-bold text-[#1F221D] transition-all cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                <KeyRound className="w-3.5 h-3.5 text-[#FF7A10]" /> Fill Demo PIN (1234)
-              </button>
-            </div>
+          <div className="w-full mt-6 pt-4 border-t border-[#E9E5E1] text-center">
+            <p className="text-[10px] font-extrabold text-[#666A64] uppercase tracking-wider mb-2">
+              Want to explore first?
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/demo')}
+              className="w-full py-2.5 px-3 rounded-xl bg-[#F7F5F2] hover:bg-[#FFF2E8] border border-[#E9E5E1] hover:border-[#FF7A10]/30 text-xs font-bold text-[#1F221D] transition-all cursor-pointer"
+            >
+              Enter the interactive demo — no password
+            </button>
           </div>
         </div>
 
