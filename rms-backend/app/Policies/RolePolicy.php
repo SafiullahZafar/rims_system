@@ -34,6 +34,9 @@ class RolePolicy
 
     private function canManageSettings(Employee|DemoVisitor $employee): bool
     {
+        if ($employee instanceof Employee && $employee->is_super_admin) {
+            return true;
+        }
         if ($employee instanceof DemoVisitor) {
             return true;
         }

@@ -1,6 +1,9 @@
 import React, { FormEvent, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api, ManagedBusiness } from '../../services/api';
 import { ROUTES_CONFIG, ROUTE_SECTIONS } from '../../constants/routesConfig';
+import { useAppStore } from '../../store/useAppStore';
+import { resetTenantStores } from '../../store/resetTenantStores';
 
 const BUSINESS_MODULES = ROUTES_CONFIG
   .filter((route) => route.section !== 'Super Admin')
@@ -9,6 +12,8 @@ const ALL_MODULES = BUSINESS_MODULES.map(({ permission }) => permission);
 const BUSINESS_SECTIONS = ROUTE_SECTIONS.filter((section) => section !== 'Super Admin');
 
 export const BusinessesScreen: React.FC = () => {
+  const navigate = useNavigate();
+  const setSelectedBusinessId = useAppStore((state) => state.setSelectedBusinessId);
   const [businesses, setBusinesses] = useState<ManagedBusiness[]>([]);
   const [businessName, setBusinessName] = useState('');
   const [ownerName, setOwnerName] = useState('');
@@ -182,6 +187,11 @@ export const BusinessesScreen: React.FC = () => {
                   <td className="p-4">{business.is_active ? 'Active' : 'Disabled'}</td>
                   <td className="p-4">
                     <div className="flex flex-col items-start gap-2">
+                      {business.is_active && <button onClick={() => {
+                        resetTenantStores();
+                        setSelectedBusinessId(business.id);
+                        navigate('/dashboard');
+                      }} className="text-xs font-bold text-[#1D7A36]">Open business modules</button>}
                       <button onClick={() => void toggleBusiness(business)} className="text-xs font-bold text-[#FF7A10]">
                         {business.is_active ? 'Disable business' : 'Enable business'}
                       </button>

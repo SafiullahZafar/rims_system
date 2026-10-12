@@ -5,13 +5,13 @@ namespace App\Models\Scopes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
-use Illuminate\Support\Facades\Auth;
+use App\Support\BusinessContext;
 
 class BusinessScope implements Scope
 {
     public function apply(Builder $builder, Model $model): void
     {
-        $businessId = Auth::user()?->business_id;
+        $businessId = BusinessContext::id();
 
         if ($businessId) {
             $builder->where($model->qualifyColumn('business_id'), $businessId);

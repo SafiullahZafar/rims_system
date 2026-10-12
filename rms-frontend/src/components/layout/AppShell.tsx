@@ -19,8 +19,9 @@ export const AppShell: React.FC<AppShellProps> = ({ children, headerTitle, heade
   const userName = useAppStore((state) => state.userName);
   const isDemo = useAppStore((state) => state.isDemo);
   const isSuperAdmin = useAppStore((state) => state.isSuperAdmin);
+  const selectedBusinessId = useAppStore((state) => state.selectedBusinessId);
   const [tourRun, setTourRun] = useState(0);
-  const tourSeenKey = `rms_guided_tour_seen:${isSuperAdmin ? 'super-admin' : isDemo ? 'demo' : 'business'}:${encodeURIComponent(userName || userRole || 'user')}`;
+  const tourSeenKey = `rms_guided_tour_seen:${isSuperAdmin ? 'super-admin' : isDemo ? 'demo' : 'business'}:${encodeURIComponent(userName || userRole || 'user')}${isSuperAdmin && selectedBusinessId ? `:${selectedBusinessId}` : ''}`;
 
   const startTour = useCallback(() => {
     window.localStorage.setItem(tourSeenKey, '1');

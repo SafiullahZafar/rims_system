@@ -266,7 +266,7 @@ export const ROUTES_CONFIG: RouteConfig[] = [
 ];
 
 export function hasPermission(userPermissions: string[], reqPermission: string, path: string): boolean {
-  if (userPermissions.includes('super_admin')) return reqPermission === 'super_admin';
+  if (userPermissions.includes('super_admin')) return true;
   if (!userPermissions || userPermissions.length === 0) return false;
   if (userPermissions.includes('/admin') || userPermissions.includes('admin')) return true;
   if (userPermissions.includes(path)) return true;

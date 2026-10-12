@@ -5,8 +5,8 @@ namespace App\Models\Concerns;
 use App\Models\Business;
 use App\Models\Employee;
 use App\Models\Scopes\BusinessScope;
+use App\Support\BusinessContext;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Auth;
 use LogicException;
 
 trait BelongsToBusiness
@@ -18,7 +18,7 @@ trait BelongsToBusiness
                 return;
             }
 
-            $businessId = Auth::user()?->business_id;
+            $businessId = BusinessContext::id();
 
             if (! $businessId) {
                 throw new LogicException('A business context is required to create this record.');

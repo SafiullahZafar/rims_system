@@ -90,7 +90,7 @@ class LoginCredential
         // Determine default screen based on permissions
         $screen = $employee->is_super_admin ? 'super-admin/businesses' : 'tables';
         if ($employee->is_super_admin) {
-            $permissions = ['super_admin'];
+            $permissions = array_values(array_unique(array_merge(['super_admin'], self::BUSINESS_MODULES)));
         } elseif (in_array('/dashboard', $permissions) || in_array('/admin', $permissions)) {
             $screen = 'dashboard';
         } elseif (in_array('/kitchen', $permissions) && ! in_array('/tables', $permissions)) {

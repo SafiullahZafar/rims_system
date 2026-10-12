@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AttendanceLog;
+use App\Support\BusinessContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -53,7 +54,7 @@ class AttendanceLogController extends Controller
         $data = $request->validate([
             'employee_id' => [
                 'required',
-                Rule::exists('employees', 'id')->where('business_id', $request->user()->business_id),
+                Rule::exists('employees', 'id')->where('business_id', BusinessContext::id()),
             ],
             'date'        => ['required', 'date'],
             'check_in'    => ['nullable', 'date_format:H:i'],
@@ -91,7 +92,7 @@ class AttendanceLogController extends Controller
         $data = $request->validate([
             'employee_id' => [
                 'sometimes',
-                Rule::exists('employees', 'id')->where('business_id', $request->user()->business_id),
+                Rule::exists('employees', 'id')->where('business_id', BusinessContext::id()),
             ],
             'date'        => ['sometimes', 'date'],
             'check_in'    => ['sometimes', 'nullable', 'date_format:H:i'],

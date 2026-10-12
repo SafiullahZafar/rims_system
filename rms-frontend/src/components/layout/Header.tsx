@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTime } from '../../hooks/useTime';
 import { useAppStore } from '../../store/useAppStore';
 import { Bell, Menu, Search, ShieldCheck, Compass } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
+import { api, ManagedBusiness } from '../../services/api';
+import { resetTenantStores } from '../../store/resetTenantStores';
 
 interface HeaderProps {
   title: string;
@@ -12,10 +15,31 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ title, breadcrumb, onMenuClick, onTakeTour }) => {
+  const navigate = useNavigate();
   const time = useTime();
   const notifications = useAppStore((state) => state.notifications);
   const userName = useAppStore((state) => state.userName);
   const userRoleName = useAppStore((state) => state.userRoleName);
+  const isSuperAdmin = useAppStore((state) => state.isSuperAdmin);
+  const selectedBusinessId = useAppStore((state) => state.selectedBusinessId);
+  const setSelectedBusinessId = useAppStore((state) => state.setSelectedBusinessId);
+  const [businesses, setBusinesses] = useState<ManagedBusiness[]>([]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    api.getManagedBusinesses()
+      .then((items) => setBusinesses(items.filter((business) => business.is_active)))
+      .catch(() => setBusinesses([]));
+  }, [isSuperAdmin]);
+
+  const selectBusiness = (value: string) => {
+    const businessId = value ? Number(value) : null;
+    if (businessId === selectedBusinessId) return;
+    resetTenantStores();
+    setSelectedBusinessId(businessId);
+    if (businessId) navigate('/dashboard');
+    else navigate('/super-admin/businesses');
+  };
 
   const formatTime = (d: Date) =>
     d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -61,6 +85,19 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumb, onMenuClick, 
 
       {/* Right: Live Clock + System Status + Notifications + Avatar */}
       <div className="flex items-center gap-3.5 flex-shrink-0">
+        {isSuperAdmin && (
+          <label className="hidden sm:flex items-center gap-2 text-xs font-semibold text-[#666A64]">
+            <span className="sr-only">Selected business workspace</span>
+            <select
+              value={selectedBusinessId ?? ''}
+              onChange={(event) => selectBusiness(event.target.value)}
+              className="max-w-48 rounded-xl border border-[#E9E5E1] bg-white px-2.5 py-2 text-xs font-bold text-[#1F221D] outline-none focus:border-[#FF7A10]"
+            >
+              <option value="">Choose business</option>
+              {businesses.map((business) => <option key={business.id} value={business.id}>{business.name}</option>)}
+            </select>
+          </label>
+        )}
         <button
           type="button"
           onClick={onTakeTour}

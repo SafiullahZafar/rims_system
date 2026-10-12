@@ -6,6 +6,7 @@ use App\Models\KitchenOrder;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\RestaurantTable;
+use App\Support\BusinessContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -37,13 +38,13 @@ class OrderController extends Controller
         $data = $request->validate([
             'restaurant_table_id' => [
                 'nullable',
-                Rule::exists('restaurant_tables', 'id')->where('business_id', $request->user()->business_id),
+                Rule::exists('restaurant_tables', 'id')->where('business_id', BusinessContext::id()),
             ],
             'order_type' => ['required', Rule::in(['dine-in', 'takeaway', 'delivery'])],
             'items' => ['required', 'array', 'min:1'],
             'items.*.menu_item_id' => [
                 'required',
-                Rule::exists('menu_items', 'id')->where('business_id', $request->user()->business_id),
+                Rule::exists('menu_items', 'id')->where('business_id', BusinessContext::id()),
             ],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
         ]);

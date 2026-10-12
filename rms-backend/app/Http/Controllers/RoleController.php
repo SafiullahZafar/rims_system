@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Support\BusinessContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -52,7 +53,7 @@ class RoleController extends Controller
                 'string',
                 'max:255',
                 Rule::unique('roles', 'name')
-                    ->where('business_id', $request->user()->business_id)
+                    ->where('business_id', BusinessContext::id())
                     ->ignore($role?->id),
             ],
             'permissions' => ['nullable', 'array'],

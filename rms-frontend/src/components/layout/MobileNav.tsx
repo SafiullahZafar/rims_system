@@ -40,12 +40,12 @@ export const MobileNav: React.FC = () => {
     { path: '/super-admin/demo-activity', label: 'Demo log', icon: Activity, perm: 'super_admin', isSpecial: false },
   ];
 
-  const mobileItems = (isSuperAdmin ? superAdminItems : businessItems)
+  const mobileItems = (isSuperAdmin ? [...businessItems, ...superAdminItems] : businessItems)
     .filter((item) => hasPermission(permissions, item.perm, item.path));
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[#E9E5E1] px-2 flex items-center justify-around z-40 select-none shadow-lg">
-      {mobileItems.slice(0, 5).map((item) => {
+    <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[#E9E5E1] px-2 flex items-center justify-start gap-2 overflow-x-auto z-40 select-none shadow-lg">
+      {mobileItems.map((item) => {
         const Icon = item.icon;
         const isActive = activePath === item.path || (activePath === '/' && item.path === '/dashboard');
 

@@ -64,18 +64,20 @@ export const App: React.FC = () => {
   const fetchKitchenOrders = useKitchenStore((state) => state.fetchKitchenOrders);
   const userRole = useAppStore((state) => state.userRole);
   const isSuperAdmin = useAppStore((state) => state.isSuperAdmin);
+  const selectedBusinessId = useAppStore((state) => state.selectedBusinessId);
   const permissions = useAppStore((state) => state.permissions);
 
   const location = useLocation();
 
   useEffect(() => {
-    if (!userRole || isSuperAdmin || location.pathname === '/login' || location.pathname === '/demo') return;
+    if (!userRole || location.pathname === '/login' || location.pathname === '/demo') return;
+    if (isSuperAdmin && (!selectedBusinessId || location.pathname.startsWith('/super-admin'))) return;
 
-    if (permissions.includes('tables.view')) fetchTables();
-    if (permissions.includes('menu.manage')) fetchMenuItems();
-    if (permissions.includes('orders.create')) fetchOrders();
-    if (permissions.includes('kitchen.view')) fetchKitchenOrders();
-  }, [location.pathname, fetchKitchenOrders, fetchMenuItems, fetchOrders, fetchTables, isSuperAdmin, permissions, userRole]);
+    if (isSuperAdmin || permissions.includes('tables.view')) fetchTables();
+    if (isSuperAdmin || permissions.includes('menu.manage')) fetchMenuItems();
+    if (isSuperAdmin || permissions.includes('orders.create')) fetchOrders();
+    if (isSuperAdmin || permissions.includes('kitchen.view')) fetchKitchenOrders();
+  }, [location.pathname, fetchKitchenOrders, fetchMenuItems, fetchOrders, fetchTables, isSuperAdmin, permissions, selectedBusinessId, userRole]);
 
   const isLogin = location.pathname === '/login';
 
@@ -92,7 +94,7 @@ export const App: React.FC = () => {
   }
 
   if (!userRole) return <Navigate to="/login" replace />;
-  if (isSuperAdmin && !location.pathname.startsWith('/super-admin')) {
+  if (isSuperAdmin && !location.pathname.startsWith('/super-admin') && !selectedBusinessId) {
     return <Navigate to="/super-admin/businesses" replace />;
   }
   if (!isSuperAdmin && location.pathname.startsWith('/super-admin')) {
@@ -108,7 +110,7 @@ export const App: React.FC = () => {
   const breadcrumb = currentRouteConfig?.breadcrumb || 'Home';
 
   return (
-    <AppShell headerTitle={title} headerBreadcrumb={breadcrumb}>
+    <AppShell key={isSuperAdmin ? selectedBusinessId ?? 'no-business' : 'business'} headerTitle={title} headerBreadcrumb={breadcrumb}>
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardScreen />} />

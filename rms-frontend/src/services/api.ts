@@ -107,7 +107,10 @@ import { useAppStore } from '../store/useAppStore';
 const asNumber = (value: string | number | null | undefined) => Number(value ?? 0);
 
 const request = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
-  const token = useAppStore.getState().token;
+  const { token, isSuperAdmin, selectedBusinessId } = useAppStore.getState();
+  const businessHeaders = isSuperAdmin && selectedBusinessId && !path.startsWith('/super-admin')
+    ? { 'X-Business-Id': String(selectedBusinessId) }
+    : {};
   
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -115,6 +118,7 @@ const request = async <T>(path: string, options: RequestInit = {}): Promise<T> =
       Accept: 'application/json',
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...businessHeaders,
       ...options.headers,
     },
   });

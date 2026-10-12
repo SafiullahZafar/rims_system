@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\Business;
 use App\Models\DemoVisitor;
 use App\Models\Employee;
+use App\Support\BusinessContext;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,6 +31,9 @@ class EnsureModuleAccess
         if (! $user instanceof Employee && ! $user instanceof DemoVisitor) {
             return $next($request);
         }
+        if ($user instanceof Employee && $user->is_super_admin) {
+            return $next($request);
+        }
 
         $route = $request->segment(2);
         $module = self::ROUTE_MODULES[$route] ?? null;
@@ -40,7 +44,7 @@ class EnsureModuleAccess
             return $next($request);
         }
 
-        $business = Business::query()->find($user->business_id);
+        $business = Business::query()->find(BusinessContext::id() ?? $user->business_id);
         $enabledModules = $business?->module_permissions;
 
         // Null preserves access for workspaces created before module-level controls existed.

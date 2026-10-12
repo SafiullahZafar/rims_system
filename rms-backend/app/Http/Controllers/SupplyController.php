@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Supply;
 use App\Models\SupplyLog;
+use App\Support\BusinessContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -78,7 +79,7 @@ class SupplyController extends Controller
     public function logs(Supply $supply): JsonResponse
     {
         return response()->json(
-            $supply->logs()->where('business_id', request()->user()->business_id)->orderByDesc('date')->orderByDesc('created_at')->get()
+            $supply->logs()->where('business_id', BusinessContext::id())->orderByDesc('date')->orderByDesc('created_at')->get()
         );
     }
 
@@ -92,7 +93,7 @@ class SupplyController extends Controller
             'notes'     => ['nullable', 'string'],
         ]);
 
-        $log = $supply->logs()->create($data + ['business_id' => $request->user()->business_id]);
+        $log = $supply->logs()->create($data + ['business_id' => BusinessContext::id()]);
 
         // Adjust supply quantity
         $supply->increment('quantity', $data['quantity']);
@@ -106,7 +107,7 @@ class SupplyController extends Controller
 
     public function deleteLog(Supply $supply, SupplyLog $log): JsonResponse
     {
-        abort_unless($log->supply_id === $supply->id && $log->business_id === request()->user()->business_id, 404);
+        abort_unless($log->supply_id === $supply->id && $log->business_id === BusinessContext::id(), 404);
 
         // Revert the quantity change
         $supply->decrement('quantity', $log->quantity);

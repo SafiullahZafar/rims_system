@@ -16,6 +16,7 @@ interface AppState {
   userRoleName: string | null;
   isSuperAdmin: boolean;
   isDemo: boolean;
+  selectedBusinessId: number | null;
   setUserRole: (role: UserRole, permissions?: string[], token?: string, userName?: string, userRoleName?: string, isSuperAdmin?: boolean, isDemo?: boolean) => void;
 
   activeScreen: Screen;
@@ -27,6 +28,7 @@ interface AppState {
 
   setScreen: (screen: Screen) => void;
   setPermissions: (permissions: string[]) => void;
+  setSelectedBusinessId: (businessId: number | null) => void;
   logout: () => void;
   toggleSidebar: () => void;
 
@@ -47,6 +49,7 @@ interface StoredSession {
   userRoleName: string | null;
   isSuperAdmin: boolean;
   isDemo: boolean;
+  selectedBusinessId?: number | null;
 }
 
 const SESSION_KEY = 'rms_session';
@@ -83,6 +86,7 @@ const readStoredSession = (): StoredSession | null => {
       userRoleName: session.userRoleName ?? null,
       isSuperAdmin: session.isSuperAdmin ?? false,
       isDemo: session.isDemo ?? false,
+      selectedBusinessId: session.selectedBusinessId ?? null,
     };
   } catch {
     return null;
@@ -117,6 +121,7 @@ export const useAppStore = create<AppState>((set) => ({
   userRoleName: storedSession?.userRoleName ?? null,
   isSuperAdmin: storedSession?.isSuperAdmin ?? false,
   isDemo: storedSession?.isDemo ?? false,
+  selectedBusinessId: storedSession?.selectedBusinessId ?? null,
   permissions: storedSession?.permissions ?? [],
   token: storedSession?.token ?? null,
 
@@ -130,6 +135,7 @@ export const useAppStore = create<AppState>((set) => ({
       userRoleName: userRoleName ?? null,
       isSuperAdmin,
       isDemo,
+      selectedBusinessId: null,
     };
     writeStoredSession(session);
     set({
@@ -140,6 +146,7 @@ export const useAppStore = create<AppState>((set) => ({
       userRoleName: userRoleName ?? null,
       isSuperAdmin,
       isDemo,
+      selectedBusinessId: null,
       selectedTableId: null,
       notifications: [],
     });
@@ -153,6 +160,13 @@ export const useAppStore = create<AppState>((set) => ({
     set({ permissions });
   },
 
+  setSelectedBusinessId: (selectedBusinessId) =>
+    set(() => {
+      const currentSession = readStoredSession();
+      if (currentSession) writeStoredSession({ ...currentSession, selectedBusinessId });
+      return { selectedBusinessId };
+    }),
+
   setScreen: (screen) =>
     set((state) => {
       if (screen === 'login') {
@@ -164,6 +178,7 @@ export const useAppStore = create<AppState>((set) => ({
           userRoleName: null,
           isSuperAdmin: false,
           isDemo: false,
+          selectedBusinessId: null,
           selectedTableId: null,
           token: null,
           permissions: [],
@@ -180,6 +195,7 @@ export const useAppStore = create<AppState>((set) => ({
           userRoleName: state.userRoleName,
           isSuperAdmin: state.isSuperAdmin,
           isDemo: state.isDemo,
+          selectedBusinessId: state.selectedBusinessId,
         });
       }
 
@@ -195,6 +211,7 @@ export const useAppStore = create<AppState>((set) => ({
       userRoleName: null,
       isSuperAdmin: false,
       isDemo: false,
+      selectedBusinessId: null,
       selectedTableId: null,
       notifications: [],
       permissions: [],

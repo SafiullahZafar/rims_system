@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Support\BusinessContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -22,7 +23,7 @@ class CustomerController extends Controller
                 'nullable',
                 'string',
                 'max:20',
-                Rule::unique('customers', 'phone')->where('business_id', $request->user()->business_id),
+                Rule::unique('customers', 'phone')->where('business_id', BusinessContext::id()),
             ],
             'email' => ['nullable', 'email'],
             'notes' => ['nullable', 'string'],
@@ -43,7 +44,7 @@ class CustomerController extends Controller
                 'string',
                 'max:20',
                 Rule::unique('customers', 'phone')
-                    ->where('business_id', $request->user()->business_id)
+                    ->where('business_id', BusinessContext::id())
                     ->ignore($customer->id),
             ],
             'email' => ['sometimes', 'nullable', 'email'],

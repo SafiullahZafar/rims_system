@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Support\BusinessContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -12,7 +13,7 @@ class EmployeeController extends Controller
     public function index(Request $request): JsonResponse
     {
         return response()->json(Employee::with('role')
-            ->where('business_id', $request->user()->business_id)
+            ->where('business_id', BusinessContext::id())
             ->where('is_demo_user', false)
             ->where('is_super_admin', false)
             ->orderBy('name')
@@ -50,7 +51,7 @@ class EmployeeController extends Controller
     private function findInBusiness(Request $request, string $id): Employee
     {
         return Employee::query()
-            ->where('business_id', $request->user()->business_id)
+            ->where('business_id', BusinessContext::id())
             ->where('is_super_admin', false)
             ->where('is_demo_user', false)
             ->findOrFail($id);
@@ -58,7 +59,7 @@ class EmployeeController extends Controller
 
     private function validated(Request $request, ?Employee $employee = null): array
     {
-        $emailRule = Rule::unique('employees', 'email')->where('business_id', $request->user()->business_id);
+        $emailRule = Rule::unique('employees', 'email')->where('business_id', BusinessContext::id());
 
         if ($employee !== null) {
             $emailRule->ignore($employee->id);
@@ -70,7 +71,7 @@ class EmployeeController extends Controller
             'phone'             => ['nullable', 'string', 'max:50'],
             'role_id'           => [
                 $employee ? 'sometimes' : 'required',
-                Rule::exists('roles', 'id')->where('business_id', $request->user()->business_id),
+                Rule::exists('roles', 'id')->where('business_id', BusinessContext::id()),
             ],
             'pin'               => ['nullable', 'string', 'max:20'],
             'is_active'         => ['sometimes', 'boolean'],

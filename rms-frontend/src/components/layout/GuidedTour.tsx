@@ -47,8 +47,10 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onClose }) => {
   const location = useLocation();
   const permissions = useAppStore((state) => state.permissions);
   const isSuperAdmin = useAppStore((state) => state.isSuperAdmin);
-  const steps = useMemo(() => (isSuperAdmin ? SUPER_ADMIN_STEPS : BUSINESS_STEPS)
-    .filter((step) => hasPermission(permissions, step.permission, step.path)), [isSuperAdmin, permissions]);
+  const selectedBusinessId = useAppStore((state) => state.selectedBusinessId);
+  const steps = useMemo(() => (isSuperAdmin
+    ? [...(selectedBusinessId ? BUSINESS_STEPS : []), ...SUPER_ADMIN_STEPS]
+    : BUSINESS_STEPS).filter((step) => hasPermission(permissions, step.permission, step.path)), [isSuperAdmin, permissions, selectedBusinessId]);
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const step = steps[stepIndex];
